@@ -60,7 +60,6 @@ handles.output = hObject;
 guidata(hObject, handles);
 set(handles.txt_filename, 'String', 'File Name');
 set(handles.txt_pathname, 'String', 'Path Name');
-
 % UIWAIT makes decideposes wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
@@ -81,31 +80,45 @@ function btn_left_Callback(hObject, eventdata, handles)
 % hObject    handle to btn_left (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-handles.currentImage
-
+targetFolder = strcat(pwd,'\dataset\left');
+toBeCopied = strcat(get(handles.txt_pathname, 'String'),get(handles.txt_filename, 'String'));
+copyfile(toBeCopied,targetFolder)
 
 % --- Executes on button press in btn_front.
 function btn_front_Callback(hObject, eventdata, handles)
 % hObject    handle to btn_front (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-handles.currentImage
-
+targetFolder = strcat(pwd,'\dataset\front');
+toBeCopied = strcat(get(handles.txt_pathname, 'String'),get(handles.txt_filename, 'String'));
+copyfile(toBeCopied,targetFolder)
 
 % --- Executes on button press in btn_right.
 function btn_right_Callback(hObject, eventdata, handles)
 % hObject    handle to btn_right (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-handles.currentImage
-copyfile('myFun.m','d:/work/Projects/')
+% handles.currentImage
+targetFolder = strcat(pwd,'\dataset\right');
+toBeCopied = strcat(get(handles.txt_pathname, 'String'),get(handles.txt_filename, 'String'));
+copyfile(toBeCopied,targetFolder)
 
 
 
 
 % --- Executes on button press in btn_next.
 function btn_next_Callback(hObject, eventdata, handles)
-get(handles)
+PathName = get(handles.txt_pathname,'String');
+[nextFileName,nextInd] =  getnextInd(PathName,get(handles.txt_filename,'String'))
+impath = strcat(PathName,nextFileName);
+im = imread(impath);
+set(handles.txt_filename, 'String', nextFileName);
+set(handles.txt_pathname, 'String', PathName);
+axes(handles.axes1);
+imshow(im);
+handles.currentImage = im;
+guidata(hObject,handles)
+
 % gatherAndUpdate(handles);
 
 % hObject    handle to btn_next (see GCBO)
@@ -118,12 +131,12 @@ function  openpic_ClickedCallback(hObject, eventdata, handles)
 % hObject    handle to openpic (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-FilterSpec =  '../stackautoencoderforld3/*' ;
+FilterSpec =  '../stackautoencoderforld3v1/stackautoencoderforld3v1/datasetstuff/*' ;
 [FileName,PathName] = uigetfile(FilterSpec) ;
 impath = strcat(PathName,FileName);
 im = imread(impath);
 set(handles.txt_filename, 'String', FileName);
-set(handles.txt_pathname, 'String', strcat(PathName));
+set(handles.txt_pathname, 'String', PathName);
 axes(handles.axes1);
 imshow(im);
 handles.currentImage = im;
@@ -144,3 +157,19 @@ axes(axesToUse)
 if gd.imOnAxes
     axes(gd)
 end
+
+function [nextIndName,nextInd] = getnextInd(dirpath,file)
+    dirContent = dir(dirpath);
+    fileNames = {dirContent(3:end).name}.';
+    currentIndex = find(strcmp(fileNames, file));
+    if currentIndex+1 ~= size(fileNames,1)
+        nextInd = currentIndex+1;
+    end
+    
+    nextIndName = fileNames{nextInd,1};
+    
+    
+    
+    
+    
+    

@@ -14,8 +14,8 @@
 %
 %% LFPW Dataset :
 programRoot= pwd; 
-
-% put csv file into a premature array : dataArray
+% 
+% % put csv file into a premature array : dataArray
 % lfpwdataset = 'D:\DATASETS\LFPW- Labeled Face Parts in the Wild\kbvt_lfpw_v1_test.csv';
 % delimiter = '\t';
 % 
@@ -24,7 +24,7 @@ programRoot= pwd;
 % % raw form of the data  
 % dataArray = textscan(fileID, formatSpec, 'Delimiter', delimiter,  'ReturnOnError', false); 
 % fclose(fileID);
-addpath 'datasetstuff'
+% addpath 'datasetstuff'
 % load('dataArray.mat')
 % Create images from urls : 
 % for i = 1 : 1%size(dataArray,2) % loop through the fields 108
@@ -45,12 +45,12 @@ addpath 'datasetstuff'
 % end
 %     end
 % end
-
+% 
 % disp('downloading LFPW images and landmark points')
-
+% 
 % datasetRoot = 'C:\Users\FERA_ECE\Documents\MATLAB\stackautoencoderforld3\lfpwDataset';
 % dirContent = dir(datasetRoot);
-% lfpwimages = cell(size(dirContent(3:end),1),size(dataArray,2)-1); % -1 cause the workes wont be placed in array
+% lfpwimages = cell(size(dirContent(3:end),1),size(dataArray,2)-1); % -1 cause the workers wont be placed in array
 % 
 % for i = 3: size(dirContent,1) % loop through the images 
 %     impath =  dirContent(i).name;
@@ -66,9 +66,16 @@ addpath 'datasetstuff'
 % 
 %     clear impath imnum
 % end
-
-% 
+addpath 'datasetstuff'
 load('lfpwimages.mat', 'lfpwimages');
+
+% %% Add file names into the lpfwimages.dat
+% lpfwroot = 'C:\Program Files\MATLAB\ml\stackautoencoderforld3v1\stackautoencoderforld3v1\datasetstuff\LPFW';
+% lpfwcontent = dir(lpfwroot);
+% for i = 3: size(lpfwcontent)
+%     lfpwimages{i-2,107} = char(lpfwcontent(i).name);
+% end
+%  
 clear delimiter fileID dataArray datasetRoot dirContent
 
 %% AFW DATASET
