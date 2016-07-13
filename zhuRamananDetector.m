@@ -1,10 +1,9 @@
-function zhuRamananDetector(image)
+function [bbox,landmarkPoints] = zhuRamananDetector(image)
 programRoot = pwd;
 zhuRamananPath = 'C:\Users\FERA_ECE\Documents\MATLAB\zhu-ramanan';
 cd(zhuRamananPath);
-
-compile;
-load('multipie_an?l_p146.mat'); % load the model
+% compile; %dont compile every time
+load('multipie_anil.mat'); % load the model
 % 5 levels for each octave
 model.interval = 5;
 % set up the threshold
@@ -23,12 +22,35 @@ end
     bs = clipboxes(image, bs);
     bs = nms_face(bs,0.3);
     
-    % show highest scoring one
-    figure,showboxes(im, bs(1),posemap),title('Highest scoring detection');
-    % show all
-    figure,showboxes(im, bs,posemap),title('All detections above the threshold');
+    x1 = bs(1).xy(:,1);
+    y1 = bs(1).xy(:,2);
+    x2 = bs(1).xy(:,3);
+    y2 = bs(1).xy(:,4);
+    landmarkPoints = [(x1+x2)/2,(y1+y2)/2];
+%     imshow(image);
+%     hold on
+% 	plot(landmarkPoints(:,1),landmarkPoints(:,2),'r.','MarkerSize',20);
     
-  % an?ldan landmark dönü?ümlerini al 
+    % specifiy borders :
+    rightBound   = [landmarkPoints(68,1),landmarkPoints(68,2)];
+    leftBound    = [landmarkPoints(60,1),landmarkPoints(60,2)];
+    upperBound   = [(landmarkPoints(19,1)+landmarkPoints(30,1)),landmarkPoints(19,2)+landmarkPoints(30,2)]/2;
+    bottomBound  = [landmarkPoints(52,1),landmarkPoints(52,2)];
+    
+    % shift'em a little
+    rightBound(1,1) = rightBound(1,1)+10;
+    leftBound(1,1)  = leftBound(1,1)-10;
+    upperBound(1,2) = upperBound(1,2)-20;
+    bottomBound(1,2)= bottomBound(1,2)+5;
+    
+    bbox= [leftBound(1,1),upperBound(1,2), rightBound(1,1)-leftBound(1,1),bottomBound(1,2)-upperBound(1,2)];
+    
+%     
+%     % show highest scoring one
+%     figure,showboxes(im, bs(1),posemap),title('Highest scoring detection');
+%     % show all
+%     figure,showboxes(im, bs,posemap),title('All detections above the threshold');
+    
 
 
 

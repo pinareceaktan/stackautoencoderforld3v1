@@ -91,16 +91,31 @@ trainImList      = strcat(helenDataSetRoot,'\train_im_list.txt');
 fileID           = fopen(trainImList);
 scannedText = textscan(fileID,'%s');
 trainImages = scannedText{1,1};
-
+run_compilers;
 for i = 1: size(trainImages,1)
     file_num    = regexpi(trainImages{i,1},'\d*(?=\_)','match');
     subject_num = regexpi(trainImages{i,1},'(?<=_)\d*','match'); 
     imagePath   = strcat(helenTrainFolder,'\',trainImages{i,1},'.jpg');
     image       = imread(imagePath);
-    
+    disp(['image: ' num2str(i)]);
     % 1 ) Detect faces : We will use zhu-ramanan face detector here 
-    zhuRamananDetector(image);    
-    clear imagePath image
+    [bbox,landmarkPoints] = zhuRamananDetector(image);
+    disp('Zhu ramanan working')
+    % 2 ) Extract only the faces and convert it to gray level
+    face =  image(bbox(2):(bbox(2)+bbox(4)),bbox(1):(bbox(1)+bbox(3)));
+    imshow(face);
+    disp('Cropping face')
+    % 3 ) Rotate face to enforce 0 slope 
+    current_slop = (landmarkPoints(21,2)-landmarkPoints(10,2))/(landmarkPoints(21,1)-landmarkPoints(10,1));
+    if current_slop ~= 0
+    rotaed_face = imrotate(face,current_slop) ;
+    disp('Enforcing 0 slope over face')
+        imshow(rotaed_face);
+
+    end
+    
+
+    clear imagePath image face
 end
 
 % DRAW
