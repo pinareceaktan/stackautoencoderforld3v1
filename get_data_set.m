@@ -1,5 +1,4 @@
 % function [images,labels] = get_data_set(dataset)
-
 % if normalize is 1 return normalize version of the data set 
 % it is usually when you train your network
 %% Train Dataset 
@@ -12,6 +11,11 @@
 %% Test Dataset 
 %   300k - 600 images (300 indoor 300 outdoor)
 %
+%% Zhu-Ramanan Face Detector 
+% X. Zhu, D. Ramanan. "Face detection, pose estimation and landmark localization in the wild" 
+% Computer Vision and Pattern Recognition (CVPR) Providence, Rhode Island, June 2012. 
+% website : https://www.ics.uci.edu/~xzhu/face/
+
 %% LFPW Dataset :
 programRoot= pwd; 
 % 
@@ -79,10 +83,25 @@ load('lfpwimages.mat', 'lfpwimages');
 clear delimiter fileID dataArray datasetRoot dirContent
 
 %% AFW DATASET
+% REQUIRES WORKING ZHU-RAMANAN  
+%% HELEN DATASET
+helenDataSetRoot = strcat(programRoot,'\','datasetstuff\HELEN'); 
+helenTrainFolder = strcat(helenDataSetRoot,'\helen_train_dataset');
+trainImList      = strcat(helenDataSetRoot,'\train_im_list.txt');
+fileID           = fopen(trainImList);
+scannedText = textscan(fileID,'%s');
+trainImages = scannedText{1,1};
 
-
-
-
+for i = 1: size(trainImages,1)
+    file_num    = regexpi(trainImages{i,1},'\d*(?=\_)','match');
+    subject_num = regexpi(trainImages{i,1},'(?<=_)\d*','match'); 
+    imagePath   = strcat(helenTrainFolder,'\',trainImages{i,1},'.jpg');
+    image       = imread(imagePath);
+    
+    % 1 ) Detect faces : We will use zhu-ramanan face detector here 
+    zhuRamananDetector(image);    
+    clear imagePath image
+end
 
 % DRAW
 %     imshow(dataset(i).images);
