@@ -87,15 +87,33 @@ clear delimiter fileID dataArray datasetRoot dirContent
 %% HELEN DATASET
 helenDataSetRoot = strcat(programRoot,'\','datasetstuff\HELEN'); 
 helenTrainFolder = strcat(helenDataSetRoot,'\helen_train_dataset');
+helenAnnotations = strcat(helenDataSetRoot,'\annotation');
 trainImList      = strcat(helenDataSetRoot,'\train_im_list.txt');
 fileID           = fopen(trainImList);
 scannedText = textscan(fileID,'%s');
 trainImages = scannedText{1,1};
+%% Create ground truth matrix for Helen
+clear fileID scannedText
+dirContent  =   dir(helenAnnotations);
+load('helenGroundTruth.mat')
+for i = 3:size(dirContent,1)
+    counter = i-2;
+    disp(counter);
+    fileID = fopen(strcat(helenAnnotations,'\',dirContent(i).name));
+    scannedText = textscan(fileID,'%d %c %d ');
+    helenGroundTruth(counter,1) = {(strcat(num2str(scannedText{1,1}(1,1)),'_',num2str(scannedText{1,3}(1,1)),'.jpg'))}; 
+    helenGroundTruth(counter,2) = {[scannedText{1,1}(2:end) scannedText{1,3}(2:end)]};
+    clear fileID scannedText
+end
+
+clear dirContent
+
+
 run_compilers;
 for i = 1: size(trainImages,1)
-    file_num    = regexpi(trainImages{i,1},'\d*(?=\_)','match');
-    subject_num = regexpi(trainImages{i,1},'(?<=_)\d*','match'); 
-    imagePath   = strcat(helenTrainFolder,'\',trainImages{i,1},'.jpg');
+    file_num        = regexpi(trainImages{i,1},'\d*(?=\_)','match');
+    subject_num     = regexpi(trainImages{i,1},'(?<=_)\d*','match'); 
+    imagePath       = strcat(helenTrainFolder,'\',trainImages{i,1},'.jpg');
     image       = imread(imagePath);
     disp(['image: ' num2str(i)]);
     % 1 ) Detect faces : We will use zhu-ramanan face detector here 
@@ -115,7 +133,7 @@ for i = 1: size(trainImages,1)
     end
     
 
-    clear imagePath image face
+    clear imagePath image face 
 end
 
 % DRAW
