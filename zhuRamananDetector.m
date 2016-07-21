@@ -1,6 +1,7 @@
 function [bbox,landmarkPoints] = zhuRamananDetector(image)
 programRoot = pwd;
 zhuRamananPath = 'C:\Users\FERA_ECE\Documents\MATLAB\zhu-ramanan';
+% zhuRamananPath = 'C:\Users\DELL\Documents\MATLAB\zhu-ramanan';
 cd(zhuRamananPath);
 % compile; %dont compile every time
 load('multipie_anil.mat'); % load the model
@@ -50,9 +51,4 @@ end
 %     figure,showboxes(im, bs(1),posemap),title('Highest scoring detection');
 %     % show all
 %     figure,showboxes(im, bs,posemap),title('All detections above the threshold');
-    
-
-
-
-
-cd(programRoot);
+    cd(programRoot)
