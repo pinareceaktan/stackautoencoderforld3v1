@@ -96,45 +96,109 @@ trainImages = scannedText{1,1};
 clear fileID scannedText
 dirContent  =   dir(helenAnnotations);
 load('helenGroundTruth.mat')
-for i = 3:size(dirContent,1)
-    counter = i-2;
-    disp(counter);
-    fileID = fopen(strcat(helenAnnotations,'\',dirContent(i).name));
-    scannedText = textscan(fileID,'%d %c %d ');
-    helenGroundTruth(counter,1) = {(strcat(num2str(scannedText{1,1}(1,1)),'_',num2str(scannedText{1,3}(1,1)),'.jpg'))}; 
-    helenGroundTruth(counter,2) = {[scannedText{1,1}(2:end) scannedText{1,3}(2:end)]};
-    clear fileID scannedText
-end
+% for i = 3:size(dirContent,1)
+%     counter = i-2;
+%     disp(counter);
+%     fileID = fopen(strcat(helenAnnotations,'\',dirContent(i).name));
+%     scannedText = textscan(fileID,'%d %c %d ');
+%     helenGroundTruth(counter,1) = {(strcat(num2str(scannedText{1,1}(1,1)),'_',num2str(scannedText{1,3}(1,1)),'.jpg'))}; 
+%     helenGroundTruth(counter,2) = {[scannedText{1,1}(2:end) scannedText{1,3}(2:end)]};
+%     fclose(fileID);
+%     clear fileID scannedText
+% end
+% fclose all
+% clear dirContent
 
-clear dirContent
 
+% run_compilers;
+load('helenGroundTruth.mat'); % load ground-truth matrix
 
-run_compilers;
 for i = 1: size(trainImages,1)
     file_num        = regexpi(trainImages{i,1},'\d*(?=\_)','match');
     subject_num     = regexpi(trainImages{i,1},'(?<=_)\d*','match'); 
     imagePath       = strcat(helenTrainFolder,'\',trainImages{i,1},'.jpg');
+    gt_index = find(strcmp(helenGroundTruth(:,1),strcat(file_num,'_',subject_num,'.jpg')));
     image       = imread(imagePath);
     disp(['image: ' num2str(i)]);
+    groundTruth = helenGroundTruth{gt_index,2};
     % 1 ) Detect faces : We will use zhu-ramanan face detector here 
     [bbox,landmarkPoints] = zhuRamananDetector(image);
     disp('Zhu ramanan working')
     % 2 ) Extract only the faces and convert it to gray level
     face =  image(bbox(2):(bbox(2)+bbox(4)),bbox(1):(bbox(1)+bbox(3)));
-    imshow(face);
+    %     imshow(face);
     disp('Cropping face')
-    % 3 ) Rotate face to enforce 0 slope 
-    current_slop = (landmarkPoints(21,2)-landmarkPoints(10,2))/(landmarkPoints(21,1)-landmarkPoints(10,1));
-    if current_slop ~= 0
-    rotaed_face = imrotate(face,current_slop) ;
-    disp('Enforcing 0 slope over face')
-        imshow(rotaed_face);
+ 
+    % 3 ) Crop the ground truth  
+    shift = bbox(1:2);
+    groundTruth =  (horzcat((groundTruth(:,1)-shift(1)),(groundTruth(:,2)-shift(2))));
+    landmarkPoints =  (horzcat((landmarkPoints(:,1)-shift(1)),(landmarkPoints(:,2)-shift(2))));
 
+    % 4 ) Extract 68 landmarks from 195 landmarks
+
+    final_landmarks  = [groundTruth(1,:);groundTruth(4,:);groundTruth(5,:);groundTruth(7,:);groundTruth(10,:);...
+        groundTruth(13,:);groundTruth(16,:);groundTruth(18,:);groundTruth(21,:);groundTruth(24,:);...
+        groundTruth(26,:);groundTruth(29,:);groundTruth(32,:);groundTruth(35,:);groundTruth(38,:);...
+        groundTruth(39,:);groundTruth(41,:);groundTruth(115,:);groundTruth(119,:);groundTruth(122,:);...
+        groundTruth(126,:);groundTruth(129,:);groundTruth(132,:);groundTruth(135,:);groundTruth(139,:);...
+        groundTruth(142,:);groundTruth(146,:);groundTruth(149,:);groundTruth(152,:);groundTruth(155,:);...
+        (groundTruth(158,:)+groundTruth(172,:))/2;(groundTruth(161,:)+groundTruth(169,:))/2;...
+        (groundTruth(163,:)+groundTruth(167,:))/2;groundTruth(165,:);groundTruth(175,:);...
+        (groundTruth(178,:)+groundTruth(192,:))/2;(groundTruth(181,:)+groundTruth(189,:))/2;...
+        (groundTruth(183,:)+groundTruth(187,:))/2;groundTruth(185,:);groundTruth(59,:);groundTruth(62,:);...
+        groundTruth(64,:);groundTruth(66,:);groundTruth(68,:);groundTruth(70,:);groundTruth(73,:);...
+        groundTruth(76,:);groundTruth(79,:);groundTruth(81,:);groundTruth(84,:);groundTruth(89,:);...
+        groundTruth(92,:);groundTruth(95,:);groundTruth(98,:);groundTruth(100,:);groundTruth(105,:);...
+        groundTruth(108,:);groundTruth(111,:);...
+        landmarkPoints(1,:);landmarkPoints(2,:);landmarkPoints(3,:);landmarkPoints(4,:);landmarkPoints(5,:);...
+        landmarkPoints(6,:);landmarkPoints(7,:);landmarkPoints(8,:);landmarkPoints(9,:);landmarkPoints(10,:)];
+   % 5 ) Rotate face to enforce 0 slope 
+        y = (final_landmarks(18,2)-final_landmarks(24,2));
+        x = (final_landmarks(18,1)-final_landmarks(24,1));
+        current_slop = acos(double(y)/double(x));
+      if current_slop ~= 0
+          clear rotated_face
+          rotated_face = imrotate(face,current_slop) ;
+          rotated_face(find(rotated_face(:,:) == 0)) = median(median(rotated_face)); % blur the image
+          rotated_gts = rotate_points(final_landmarks,current_slop);
+          disp('Enforcing 0 slope over face')
+      end
+
+    h = figure
+    subplot(2,2,1)
+    imshow(face);
+    hold on
+    plot(landmarkPoints(:,1),landmarkPoints(:,2),'r.','MarkerSize',20)
+    title('Subplot 1: Zhu-Ramanan Result')
+
+    subplot(2,2,2)
+    imshow(face);
+    hold on
+    plot(groundTruth(:,1),groundTruth(:,2),'r.','MarkerSize',20)
+    title('Subplot 2: Ground-Truth Result')
+
+    subplot(2,2,3)
+    imshow(face);
+    hold on
+    plot(final_landmarks(:,1),final_landmarks(:,2),'r.','MarkerSize',20)
+    title('Subplot 3: Final Ground-Truth Result')
+    if  current_slop ~= 0
+        subplot(2,2,4)
+        imshow(rotated_face);
+        hold on
+        plot(rotated_gts(:,1),rotated_gts(:,2),'y.','MarkerSize',20)
+        title('Subplot 4: Final Ground-Truth Result with Rotation')
     end
-    
+%     disp('press any key to continue');
+%     pause;
 
-    clear imagePath image face 
+saveas(h,char(strcat('results/',file_num,'_',subject_num, '.jpg')))
+    clear imagePath image face h
+    close all;
+
+  pause(1)
 end
+disp('mkl');
 
 % DRAW
 %     imshow(dataset(i).images);
@@ -147,7 +211,7 @@ end
 % dirinfo = dirinfo(3:end);
 % if nargin <1
 %     dataset='train';
-% end
+% espnd
 % switch dataset
 %     case 'train'
 %      dirinfo = dirinfo(1:2200);
@@ -228,5 +292,3 @@ end
 %     labels(:,i) = reshape(data(i).groundtruth,classsize,1);
 % end
 cd(programRoot);
-
-
