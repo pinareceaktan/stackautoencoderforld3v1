@@ -113,19 +113,25 @@ load('helenGroundTruth.mat')
 % run_compilers;
 load('helenGroundTruth.mat'); % load ground-truth matrix
 
+allGroundTruths = cell(size(trainImages,1),3);
+
 for i = 1: size(trainImages,1)
     file_num        = regexpi(trainImages{i,1},'\d*(?=\_)','match');
     subject_num     = regexpi(trainImages{i,1},'(?<=_)\d*','match'); 
     imagePath       = strcat(helenTrainFolder,'\',trainImages{i,1},'.jpg');
-    gt_index = find(strcmp(helenGroundTruth(:,1),strcat(file_num,'_',subject_num,'.jpg')));
-    image       = imread(imagePath);
+    gt_index        = find(strcmp(helenGroundTruth(:,1),strcat(file_num,'_',subject_num,'.jpg')));
+    image           = imread(imagePath);
     disp(['image: ' num2str(i)]);
     groundTruth = helenGroundTruth{gt_index,2};
-    % 1 ) Detect faces : We will use zhu-ramanan face detector here 
+    % 1 a ) Detect faces : Chehra face detector here
+    [chbbox,chlandmarkPoints] = chehra68Detector(image,imagePath);
+    disp('Chehra working')
+    % 1  b) Detect faces : We will use zhu-ramanan face detector here 
     [bbox,landmarkPoints] = zhuRamananDetector(image);
     disp('Zhu ramanan working')
     % 2 ) Extract only the faces and convert it to gray level
-    face =  image(bbox(2):(bbox(2)+bbox(4)),bbox(1):(bbox(1)+bbox(3)));
+    face    =  image(bbox(2):(bbox(2)+bbox(4)),bbox(1):(bbox(1)+bbox(3)));
+    chface  =  image(chbbox(2):(chbbox(2)+chbbox(4)),chbbox(1):(chbbox(1)+chbbox(3)));
     %     imshow(face);
     disp('Cropping face')
  
@@ -133,12 +139,15 @@ for i = 1: size(trainImages,1)
     shift = bbox(1:2);
     groundTruth =  (horzcat((groundTruth(:,1)-shift(1)),(groundTruth(:,2)-shift(2))));
     landmarkPoints =  (horzcat((landmarkPoints(:,1)-shift(1)),(landmarkPoints(:,2)-shift(2))));
+    
+    chshift = chbbox(1:2);
+    chlandmarkPoints = (horzcat((chlandmarkPoints(:,1)-chshift(1)),(chlandmarkPoints(:,2)-chshift(2))));
 
     % 4 ) Extract 68 landmarks from 195 landmarks
 
     final_landmarks  = [groundTruth(1,:);groundTruth(4,:);groundTruth(5,:);groundTruth(7,:);groundTruth(10,:);...
         groundTruth(13,:);groundTruth(16,:);groundTruth(18,:);groundTruth(21,:);groundTruth(24,:);...
-        groundTruth(26,:);groundTruth(29,:);groundTruth(32,:);groundTruth(35,:);groundTruth(38,:);...
+        groundTruth(26,:);groundTruth(27,:);groundTruth(29,:);groundTruth(32,:);groundTruth(35,:);groundTruth(38,:);...
         groundTruth(39,:);groundTruth(41,:);groundTruth(115,:);groundTruth(119,:);groundTruth(122,:);...
         groundTruth(126,:);groundTruth(129,:);groundTruth(132,:);groundTruth(135,:);groundTruth(139,:);...
         groundTruth(142,:);groundTruth(146,:);groundTruth(149,:);groundTruth(152,:);groundTruth(155,:);...
@@ -151,49 +160,62 @@ for i = 1: size(trainImages,1)
         groundTruth(92,:);groundTruth(95,:);groundTruth(98,:);groundTruth(100,:);groundTruth(105,:);...
         groundTruth(108,:);groundTruth(111,:);...
         landmarkPoints(1,:);landmarkPoints(2,:);landmarkPoints(3,:);landmarkPoints(4,:);landmarkPoints(5,:);...
-        landmarkPoints(6,:);landmarkPoints(7,:);landmarkPoints(8,:);landmarkPoints(9,:);landmarkPoints(10,:)];
-   % 5 ) Rotate face to enforce 0 slope 
-        y = (final_landmarks(18,2)-final_landmarks(24,2));
-        x = (final_landmarks(18,1)-final_landmarks(24,1));
-        current_slop = acos(double(y)/double(x));
-      if current_slop ~= 0
-          clear rotated_face
-          rotated_face = imrotate(face,current_slop) ;
-          rotated_face(find(rotated_face(:,:) == 0)) = median(median(rotated_face)); % blur the image
-          rotated_gts = rotate_points(final_landmarks,current_slop);
-          disp('Enforcing 0 slope over face')
-      end
+        landmarkPoints(6,:);landmarkPoints(7,:);landmarkPoints(8,:);landmarkPoints(9,:)];
+%    % 5 ) Rotate face to enforce 0 slope 
+%         y = (final_landmarks(18,2)-final_landmarks(24,2));
+%         x = (final_landmarks(18,1)-final_landmarks(24,1));
+%         current_slop = acos(double(y)/double(x));
+%       if current_slop ~= 0
+%           clear rotated_face
+%           rotated_face = imrotate(face,current_slop) ;
+%           rotated_face(find(rotated_face(:,:) == 0)) = median(median(rotated_face)); % blur the image
+%           rotated_gts = rotate_points(final_landmarks,current_slop);
+%           disp('Enforcing 0 slope over face')
+%       end
 
     h = figure
     subplot(2,2,1)
     imshow(face);
     hold on
-    plot(landmarkPoints(:,1),landmarkPoints(:,2),'r.','MarkerSize',20)
+    plot(landmarkPoints(:,1),landmarkPoints(:,2),'r.','MarkerSize',10)
     title('Subplot 1: Zhu-Ramanan Result')
 
     subplot(2,2,2)
     imshow(face);
     hold on
-    plot(groundTruth(:,1),groundTruth(:,2),'r.','MarkerSize',20)
+    plot(groundTruth(:,1),groundTruth(:,2),'r.','MarkerSize',10)
     title('Subplot 2: Ground-Truth Result')
 
     subplot(2,2,3)
     imshow(face);
     hold on
-    plot(final_landmarks(:,1),final_landmarks(:,2),'r.','MarkerSize',20)
+    plot(final_landmarks(:,1),final_landmarks(:,2),'r.','MarkerSize',10)
     title('Subplot 3: Final Ground-Truth Result')
-    if  current_slop ~= 0
-        subplot(2,2,4)
-        imshow(rotated_face);
-        hold on
-        plot(rotated_gts(:,1),rotated_gts(:,2),'y.','MarkerSize',20)
-        title('Subplot 4: Final Ground-Truth Result with Rotation')
-    end
+    
+    subplot(2,2,4)
+    imshow(chface);
+    hold on
+    plot(chlandmarkPoints(:,1),chlandmarkPoints(:,2),'r.','MarkerSize',10)
+    title('Subplot 4: Chehra Ground-Truth Result')
+    
+%     if  current_slop ~= 0
+%         subplot(2,2,4)
+%         imshow(rotated_face);
+%         hold on
+%         plot(rotated_gts(:,1),rotated_gts(:,2),'y.','MarkerSize',10)
+%         title('Subplot 4: Final Ground-Truth Result with Rotation')
+%     end
 %     disp('press any key to continue');
 %     pause;
 
 saveas(h,char(strcat('results/',file_num,'_',subject_num, '.jpg')))
-    clear imagePath image face h
+
+allGroundTruths(i,1) = {helenGroundTruth};
+allGroundTruths(i,2) = {landmarkPoints};
+allGroundTruths(i,3) = {chlandmarkPoints};
+allGroundTruths(i,4) = {final_landmarks};
+
+    clear imagePath image face h landmarkPoints chlandmarkPoints final_landmarks
     close all;
 
   pause(1)
