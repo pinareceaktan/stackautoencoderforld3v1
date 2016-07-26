@@ -39,7 +39,7 @@ elseif select_fitting==3
     data=GFRM_Alt(CLM,grmf,data,bbox_method,select_nview,visualize);    
 end
 landmarkPoints = data(1).points;
- if size(landmarkPoints,1) >= 68
+ if size(landmarkPoints,1) >= 66
   % specifiy borders :
     rightBound   = [landmarkPoints(17,1),landmarkPoints(17,2)];
     leftBound    = [landmarkPoints(1,1),landmarkPoints(1,2)];
