@@ -41,9 +41,9 @@ end
     
         % shift'em a little
         rightBound(1,1) = rightBound(1,1)+10;
-        leftBound(1,1)  = leftBound(1,1)-10;
-        upperBound(1,2) = upperBound(1,2)-20;
-        bottomBound(1,2)= bottomBound(1,2)+5;
+        leftBound(1,1)  = leftBound(1,1)-5;
+        upperBound(1,2) = upperBound(1,2)-5;
+        bottomBound(1,2)= bottomBound(1,2)+10;
 
         bbox= [leftBound(1,1),upperBound(1,2), rightBound(1,1)-leftBound(1,1),bottomBound(1,2)-upperBound(1,2)];
     else 
