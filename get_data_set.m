@@ -113,7 +113,7 @@ load('helenGroundTruth.mat'); % load ground-truth matrix
 
 allGroundTruths = cell(size(trainImages,1),3);
 
-for i =850: size(trainImages,1)
+for i = 1: size(trainImages,1)
    try
     file_num        = regexpi(trainImages{i,1},'\d*(?=\_)','match');
     subject_num     = regexpi(trainImages{i,1},'(?<=_)\d*','match'); 
@@ -143,7 +143,8 @@ for i =850: size(trainImages,1)
           origin=size(rgb2gray(fixedImage))/2+.5; % center of the whole image
           rotated_face = imrotate(fixedImage,current_slop,'bilinear','crop ') ;
           rotated_face(find(rotated_face(:,:) == 0)) = median(median(rgb2gray(fixedImage))); % blur the image
-          rotated_gts  = rotate_points(fixedgt,current_slop,origin');
+          rotated_gts  = rotate_points(fixedgt,current_slop,[origin(1,2) ; origin(1,1)]);
+          clear fixedImage fixedgt
           fixedImage = rotated_face;
           fixedgt = rotated_gts;
           clear rotated_face rotated_gts
@@ -283,11 +284,11 @@ for i =850: size(trainImages,1)
 %     disp('press any key to continue');
 %     pause;
 
-saveas(h,char(strcat('results/',file_num,'_',subject_num, '.jpg')))
+    saveas(h,char(strcat('results/',file_num,'_',subject_num, '.jpg')))
 
-allGroundTruths(i,1) = {helenGroundTruth};
-allGroundTruths(i,2) = {chlandmarkPoints};
-allGroundTruths(i,3) = {final_landmarks};
+    allGroundTruths(i,1) = {helenGroundTruth};
+    allGroundTruths(i,2) = {chlandmarkPoints};
+    allGroundTruths(i,3) = {final_landmarks};
 % allGroundTruths(i,4) = {landmarkPoints};
 
 
@@ -297,8 +298,8 @@ allGroundTruths(i,3) = {final_landmarks};
   pause(1)
    catch ME
        fileID = fopen('process_log.txt','w');
-fprintf(fileID,'%20s %50s\n %3d',char(strcat(file_num,'_',subject_num,'.jpg')),(ME.identifier),(ME.stack.line));
-fclose(fileID);
+       fprintf(fileID,'%20s %50s\n %3d',char(strcat(file_num,'_',subject_num,'.jpg')),(ME.identifier),(ME.stack.line));
+       fclose(fileID);
        continue;
    end
 end
