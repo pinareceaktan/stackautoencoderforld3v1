@@ -1,9 +1,9 @@
-function [rotated_landmarks] = rotate_points(points,theta)
+function [rotated_landmarks] = rotate_points(points,theta,origin)
 theta = -theta*(pi/180);  
 % define a 60 degree counter-clockwise rotation matrix
 R = [cos(theta) -sin(theta); sin(theta) cos(theta)];
-center = repmat([0; 0], 1, length(points));
-v = double(points') - center;
+center = double(repmat(origin, 1, length(points)));
+v = double(points') - (center);
 
 % do the rotation...
 so = R*v;           % apply the rotation about the origin
