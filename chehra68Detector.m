@@ -43,14 +43,36 @@ landmarkPoints = data(1).points;
   % specifiy borders :
     rightBound   = [landmarkPoints(17,1),landmarkPoints(17,2)];
     leftBound    = [landmarkPoints(1,1),landmarkPoints(1,2)];
-    upperBound   = [(landmarkPoints(20,1)+landmarkPoints(25,1)),landmarkPoints(20,2)+landmarkPoints(25,2)]/2;
+    upperBound   = [(landmarkPoints(20,1)+landmarkPoints(25,1)),(landmarkPoints(20,2)+landmarkPoints(25,2))]/2;
     bottomBound  = [landmarkPoints(9,1),landmarkPoints(9,2)];
     
-    % shift'em a little
-    rightBound(1,1) = rightBound(1,1)+10;
-    leftBound(1,1)  = leftBound(1,1)-10;
+   % shift'em a little
+    
+    rightBound(1,1) = rightBound(1,1)+20;
+    leftBound(1,1)  = leftBound(1,1)-20;
     upperBound(1,2) = upperBound(1,2)-20;
-    bottomBound(1,2)= bottomBound(1,2)+5;
+    bottomBound(1,2)= bottomBound(1,2)+20;
+    
+    % check borders
+   
+    if leftBound(1,1)<0  % left border 
+        leftBound(1,1) = 0;
+    end
+    if rightBound(1,1)>size(image,2) % right border 
+        rightBound(1,1) = size(image,2);
+    end
+    if upperBound(1,2)<0
+            upperBound(1,2)= 0;
+    end
+    if   bottomBound(1,2) > size(image,1)
+            bottomBound(1,2) = size(image,1);
+    end
+    
+    
+ 
+    
+    
+    
     
     bbox= [leftBound(1,1),upperBound(1,2), rightBound(1,1)-leftBound(1,1),bottomBound(1,2)-upperBound(1,2)];
  else
