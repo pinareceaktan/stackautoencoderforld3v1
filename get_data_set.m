@@ -98,13 +98,12 @@ dirContent  =   dir(helenAnnotations);
 load('helenGroundTruth.mat')
 % for i = 3:size(dirContent,1)
 %     counter = i-2;
-%     disp(counter);
 %     fileID = fopen(strcat(helenAnnotations,'\',dirContent(i).name));
-%     scannedText = textscan(fileID,'%d %c %d ');
+%     scannedText = textscan(fileID,'%f %c %f ');
 %     helenGroundTruth(counter,1) = {(strcat(num2str(scannedText{1,1}(1,1)),'_',num2str(scannedText{1,3}(1,1)),'.jpg'))}; 
 %     helenGroundTruth(counter,2) = {[scannedText{1,1}(2:end) scannedText{1,3}(2:end)]};
 %     fclose(fileID);
-%     clear fileID scannedText
+%     clear fileID scannedText counter
 % end
 % fclose all
 % clear dirContent
@@ -199,19 +198,19 @@ for i = 1: size(trainImages,1)
     if leftBound(1,1)<0  % left border
         leftBound(1,1) = 0;
     end
-    if rightBound(1,1)>size(image,2) % right border
-        rightBound(1,1) = size(image,2);
+    if rightBound(1,1)>size(fixedImage,2) % right border
+        rightBound(1,1) = size(fixedImage,2);
     end
     if upperBound(1,2)<0
         upperBound(1,2)= 0;
     end
-    if   bottomBound(1,2) > size(image,1)
-        bottomBound(1,2) = size(image,1);
+    if   bottomBound(1,2) > size(fixedImage,1)
+        bottomBound(1,2) = size(fixedImage,1);
     end
     gbbox= [leftBound(1,1),upperBound(1,2), rightBound(1,1)-leftBound(1,1),bottomBound(1,2)-upperBound(1,2)];
     gface  =  fixedImage(gbbox(2):(gbbox(2)+gbbox(4)),gbbox(1):(gbbox(1)+gbbox(3)));
 %% 2 b) Shift ground truths accordingly  
-    gshift = gbbox(1:2);
+    gshift = double(gbbox(1:2));
     fixedgt =  (horzcat((fixedgt(:,1)-gshift(1)),(fixedgt(:,2)-gshift(2))));
     chlandmarkPoints = (horzcat((chlandmarkPoints(:,1)-gshift(1)),(chlandmarkPoints(:,2)-gshift(2))));
 %% 2 c ) Crop only the face frame using Zhu-Ramanan facial landmarks and shift gts accourdingly
@@ -268,11 +267,11 @@ for i = 1: size(trainImages,1)
 %     hold on
 %     plot(chlandmarkPoints(:,1),chlandmarkPoints(:,2),'r.','MarkerSize',10)
 %     title('Subplot 4: Chehra Ground-Truth Result')
-    h = figure ;
-    imshow(gface);
-    hold on
-    plot(final_landmarks(:,1),final_landmarks(:,2),'r.','MarkerSize',10)
-    title(['image : ' num2str(i) ' name ' file_num ])
+%     h = figure ;
+%     imshow(gface);
+%     hold on
+%     plot(final_landmarks(:,1),final_landmarks(:,2),'r.','MarkerSize',10)
+%     title(['image : ' num2str(i) ' name ' file_num ])
     
 %     if  current_slop ~= 0
 %         subplot(2,2,4)
@@ -284,7 +283,7 @@ for i = 1: size(trainImages,1)
 %     disp('press any key to continue');
 %     pause;
 
-    saveas(h,char(strcat('results/',file_num,'_',subject_num, '.jpg')))
+%     saveas(h,char(strcat('results/',file_num,'_',subject_num, '.jpg')))
 
     allGroundTruths(i,1) = {helenGroundTruth};
     allGroundTruths(i,2) = {chlandmarkPoints};
@@ -292,14 +291,15 @@ for i = 1: size(trainImages,1)
 % allGroundTruths(i,4) = {landmarkPoints};
 
 
-    clear imagePath image face h landmarkPoints chlandmarkPoints final_landmarks
+    clear imagePath image face  landmarkPoints chlandmarkPoints final_landmarks
+%     clear imagePath image face h landmarkPoints chlandmarkPoints final_landmarks
     close all;
 
   pause(1)
    catch ME
-       fileID = fopen('process_log.txt','w');
-       fprintf(fileID,'%20s %50s\n %3d',char(strcat(file_num,'_',subject_num,'.jpg')),(ME.identifier),(ME.stack.line));
-       fclose(fileID);
+       fileID = fopen('logfile.txt','a');
+       fprintf(fileID1,'%20s %40s %3d\n',char(strcat(file_num,'_',subject_num,'.jpg')),(ME.identifier),(ME.stack.line));
+       fclose(fileID1);
        continue;
    end
 end
