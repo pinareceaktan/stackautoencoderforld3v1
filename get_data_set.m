@@ -112,7 +112,7 @@ load('helenGroundTruth.mat'); % load ground-truth matrix
 
 allGroundTruths = cell(size(trainImages,1),3);
 
-for i = 1: size(trainImages,1)
+for i = 352: size(trainImages,1)
    try
     file_num        = regexpi(trainImages{i,1},'\d*(?=\_)','match');
     subject_num     = regexpi(trainImages{i,1},'(?<=_)\d*','match'); 
@@ -193,7 +193,7 @@ for i = 1: size(trainImages,1)
     rightBound(1,1) = rightBound(1,1)+20;
     leftBound(1,1)  = leftBound(1,1)-20;
     upperBound(1,2) = upperBound(1,2)-20;
-    bottomBound(1,2)= bottomBound(1,2)+10;
+    bottomBound(1,2)= bottomBound(1,2)+20;
     % check borders
     if leftBound(1,1)<0  % left border
         leftBound(1,1) = 0;
@@ -267,11 +267,12 @@ for i = 1: size(trainImages,1)
 %     hold on
 %     plot(chlandmarkPoints(:,1),chlandmarkPoints(:,2),'r.','MarkerSize',10)
 %     title('Subplot 4: Chehra Ground-Truth Result')
-%     h = figure ;
-%     imshow(gface);
-%     hold on
-%     plot(final_landmarks(:,1),final_landmarks(:,2),'r.','MarkerSize',10)
-%     title(['image : ' num2str(i) ' name ' file_num ])
+
+    h = figure ;
+    imshow(gface);
+    hold on
+    plot(final_landmarks(:,1),final_landmarks(:,2),'r.','MarkerSize',10)
+    title(['image : ' num2str(i) ' name ' file_num ])
     
 %     if  current_slop ~= 0
 %         subplot(2,2,4)
@@ -283,7 +284,7 @@ for i = 1: size(trainImages,1)
 %     disp('press any key to continue');
 %     pause;
 
-%     saveas(h,char(strcat('results/',file_num,'_',subject_num, '.jpg')))
+    saveas(h,char(strcat('results/',file_num,'_',subject_num, '.jpg')))
 
     allGroundTruths(i,1) = {helenGroundTruth};
     allGroundTruths(i,2) = {chlandmarkPoints};
@@ -298,8 +299,8 @@ for i = 1: size(trainImages,1)
   pause(1)
    catch ME
        fileID = fopen('logfile.txt','a');
-       fprintf(fileID1,'%20s %40s %3d\n',char(strcat(file_num,'_',subject_num,'.jpg')),(ME.identifier),(ME.stack.line));
-       fclose(fileID1);
+       fprintf(fileID,'%20s %40s %3d\n',char(strcat(file_num,'_',subject_num,'.jpg')),(ME.identifier),(ME.stack.line));
+       fclose(fileID);
        continue;
    end
 end
