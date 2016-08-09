@@ -1,6 +1,8 @@
 % function [images,labels] = get_data_set(dataset)
-% if normalize is 1 return normalize version of the data set 
-% it is usually when you train your network
+% function get_data_set_raw fetches data to prepare train and test sets
+% for neural network implementation
+% 3 datasets is in use which explanied below
+% the datasets are from i-bug. 
 %% Train Dataset 
 % Three databases: LFPW [21],Helen [22] and AFW [23]. 
 % 811 images from LFPW,
@@ -15,72 +17,155 @@
 % X. Zhu, D. Ramanan. "Face detection, pose estimation and landmark localization in the wild" 
 % Computer Vision and Pattern Recognition (CVPR) Providence, Rhode Island, June 2012. 
 % website : https://www.ics.uci.edu/~xzhu/face/
-
-%% LFPW Dataset :
+imsize = 100*100;
+classsize = 68*2;
 programRoot= pwd; 
-% 
-% % put csv file into a premature array : dataArray
-% lfpwdataset = 'D:\DATASETS\LFPW- Labeled Face Parts in the Wild\kbvt_lfpw_v1_test.csv';
-% delimiter = '\t';
-% 
-% formatSpec = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%[^\n\r]';
-% fileID = fopen(lfpwdataset,'r');
-% % raw form of the data  
-% dataArray = textscan(fileID, formatSpec, 'Delimiter', delimiter,  'ReturnOnError', false); 
-% fclose(fileID);
-% addpath 'datasetstuff'
-% load('dataArray.mat')
-% Create images from urls : 
-% for i = 1 : 1%size(dataArray,2) % loop through the fields 108
-%     for j = 2 :  size(dataArray{i},1)
-%        
-% % outfilename = websave(filename,url)
-% try
-%     outfilename = websave(['dataset/lfpw_' num2str(j) '.jpg'],char(cellstr(dataArray{1,i}(j,1))));
-%     disp(['item ' num2str(j) ':' outfilename ' was saved!'])
-% 
-% catch ME
-%         disp(['item ' num2str(j) ' exites with --> ' ME.identifier]);
-%         stat = which(['dataset/lfpw_' num2str(j) '.jpg.html']);
-%         if ~strcmp(stat, '') 
-%             delete(['dataset/lfpw_' num2str(j) '.jpg.html']);
-%         end
-%         clear stat
-% end
-%     end
-% end
-% 
-% disp('downloading LFPW images and landmark points')
-% 
-% datasetRoot = 'C:\Users\FERA_ECE\Documents\MATLAB\stackautoencoderforld3\lfpwDataset';
-% dirContent = dir(datasetRoot);
-% lfpwimages = cell(size(dirContent(3:end),1),size(dataArray,2)-1); % -1 cause the workers wont be placed in array
-% 
-% for i = 3: size(dirContent,1) % loop through the images 
-%     impath =  dirContent(i).name;
-%     imnum = regexp(impath,'\d*','match');
-%     imnum = str2double(imnum{1,1});
-%   
-%  
-%     lfpwimages{i-2,1} =  imread(impath); % image
-%     for j = 3 : size(dataArray,2) % loop through the fields starting with left_eyebrow_out_x
-%         lfpwimages{i-2,j-1} = str2double(dataArray{1,j}(imnum)); % j-1 equals to 2 , and field 1 is already filled by the image array
-%     end
-%     
-% 
-%     clear impath imnum
-% end
-% addpath 'datasetstuff'
-% load('lfpwimages.mat', 'lfpwimages');
+%% LFPW Dataset :
 
-% %% Add file names into the lpfwimages.dat
-% lpfwroot = 'C:\Program Files\MATLAB\ml\stackautoencoderforld3v1\stackautoencoderforld3v1\datasetstuff\LPFW';
-% lpfwcontent = dir(lpfwroot);
-% for i = 3: size(lpfwcontent)
-%     lfpwimages{i-2,107} = char(lpfwcontent(i).name);
+% lfpwDataSetRoot     = strcat(programRoot,'\','datasetstuff','\LFPW');
+% lfpwTrainFolder     = strcat(lfpwDataSetRoot,'\trainset');
+% lfpwAnnotations     = strcat(lfpwDataSetRoot,'\annotations');
+% dirContent          = dir(lfpwAnnotations);
+% lfpwtrainImList     = cell(size(dirContent,1)-2,1);
+% lfpwAnnotationList  = cell(size(dirContent,1)-2,1);
+% 
+% for i = 3 : size(dirContent,1)
+%     lfpwtrainImList(i-2,1)     =  strcat(regexpi(dirContent(i).name,'\S*(?=\.pts)','match'),'.png');
+%     lfpwAnnotationList(i-2,1)  =  {dirContent(i).name};
 % end
-%  
-clear delimiter fileID dataArray datasetRoot dirContent
+% %% Create ground truth matrix for LFPW
+% 
+% % for i = 1:size(lfpwAnnotationList,1)
+% %     try
+% %       fileID                = fopen(strcat(lfpwAnnotations,'\',lfpwAnnotationList{i,1}));
+% %       scannedText           = textscan(fileID,'%s');
+% %       lfpwGroundTruth(i,1)  = lfpwtrainImList(i,1); 
+% % %     stupid extension because gts are like ass 
+% %       dim1 = scannedText{1,1}(6:2:140);
+% %       dim2 = scannedText{1,1}(7:2:141);
+% %     for j = 1 : size(dim1,1)
+% %         dim1arr(j,1)= str2num(dim1{j,1});
+% %         dim2arr(j,1)= str2num(dim2{j,1});
+% %     end
+% %     
+% %         lfpwGroundTruth(i,2) = {[dim1arr dim2arr]};
+% % 
+% %     fclose(fileID);
+% %     clear fileID scannedText dim1 dim2
+% %     catch ME
+% %            disp(num2str(i));
+% %         disp(ME.identifier);
+% %     continue;
+% %     end
+% % 
+% % end
+% % disp('sdfsdf');
+% load('lfpwGroundTruth.mat');
+% 
+% for i = 1: size(lfpwtrainImList,1)
+%    try
+%     imagePath       = strcat(lfpwTrainFolder,'\',lfpwtrainImList{i,1});
+%     gt_index        = find(strcmp(lfpwGroundTruth(:,1),lfpwtrainImList{i,1}));
+%     image           = imread(imagePath);
+%     disp(['1 Image: ' num2str(i) ' has loaded']);
+%     groundTruth     = lfpwGroundTruth{gt_index,2};    
+%     fixedImage      = image;
+%     fixedgt         = groundTruth;
+%     disp(['1.b Ground truth: ' num2str(i) ' has loaded']);
+% 
+% %% 2 a) Crop only the face frame using ground truth data  
+%    disp('2..Cropping only the face out of the image')
+%     % specifiy borders :
+%     lefters         = [1:6];
+%     righters        = [13:17];
+%     deepers         = [7:12];
+%     leftUppers      = [18:22];
+%     rightUppers     = [23:27];
+%     
+%     rightIndes    = find( fixedgt(:,1)==max(fixedgt(righters,1)));
+%     leftIndes     = find( fixedgt(:,1)==min(fixedgt(lefters,1)));
+%     leftTopIndes  = find( fixedgt(:,2)==min(fixedgt(leftUppers,2)));
+%     rightTopIndes = find( fixedgt(:,2)==min(fixedgt(rightUppers,2)));
+%     downIndes     = find( fixedgt(:,2)==max(fixedgt(deepers,2)));
+%     
+%     mostRightInd   = rightIndes(1,1);
+%     mostLeftInd    = leftIndes(1,1);
+%     mostLeftTopInd = leftTopIndes(1,1);
+%     mostRightTopInd= rightTopIndes(1,1);
+%     mostDownInd    = downIndes(1,1);
+%     
+%     rightBound   = [fixedgt(mostRightInd,1),fixedgt(mostRightInd,2)];
+%     leftBound    = [fixedgt(mostLeftInd,1),fixedgt(mostLeftInd,2)];
+%     upperBound   = [(fixedgt(mostLeftTopInd,1)+fixedgt(mostRightTopInd,1)),(fixedgt(mostLeftTopInd,2)+fixedgt(mostRightTopInd,2))]/2;
+%     bottomBound  = [fixedgt(mostDownInd,1),fixedgt(mostDownInd,2)];
+%     
+%     % shift'em a little
+%     rightBound(1,1) = rightBound(1,1)+20;
+%     leftBound(1,1)  = leftBound(1,1)-20;
+%     upperBound(1,2) = upperBound(1,2)-20;
+%     bottomBound(1,2)= bottomBound(1,2)+20;
+%     % check borders
+%     if leftBound(1,1)<0  % left border
+%         leftBound(1,1) = 0;
+%     end
+%     if rightBound(1,1)>size(fixedImage,2) % right border
+%         rightBound(1,1) = size(fixedImage,2);
+%     end
+%     if upperBound(1,2)<0
+%         upperBound(1,2)= 0;
+%     end
+%     if   bottomBound(1,2) > size(fixedImage,1)
+%         bottomBound(1,2) = size(fixedImage,1);
+%     end
+%     gbbox= [leftBound(1,1),upperBound(1,2), rightBound(1,1)-leftBound(1,1),bottomBound(1,2)-upperBound(1,2)];
+%     gface  =  fixedImage(gbbox(2):(gbbox(2)+gbbox(4)),gbbox(1):(gbbox(1)+gbbox(3)));
+%     disp('2.a Face has extracted from image')
+% %% 2 b) Shift ground truths accordingly  
+%     gshift = double(gbbox(1:2));
+%     fixedgt =  (horzcat((fixedgt(:,1)-gshift(1)),(fixedgt(:,2)-gshift(2))));
+% %% 3 ) Resize
+%     nonresizedsize  = size(gface);
+%     gface           = imresize(gface,[100 100]);
+%     resizedsize     = size(gface);
+%     scalex          = nonresizedsize(1)/resizedsize(1);
+%     scaley          = nonresizedsize(1,2)/resizedsize(1,2);
+%     fixedgt         = horzcat(fixedgt(:,1)/scaley,fixedgt(:,2)/scalex);
+%     
+%     disp('3 Resizing the face has done')
+%  %% 4.1 ) Draw and save results
+%     h = figure ;
+%     imshow(gface);
+%     hold on
+%     plot(fixedgt(:,1),fixedgt(:,2),'r.','MarkerSize',10)
+%     title(['image : ' num2str(i)])
+%     
+%     saveas(h,char(strcat('resultsLFPW/',lfpwtrainImList{i,1})))
+%     disp('4.1 Face and gts has saved visually')
+% %% 4.2 ) Normalization : Scale intensity values
+%         gface   =  im2double(gface);
+%         gface   = normalizePic(gface);
+%         fixedgt = normalizePic(fixedgt);
+%         disp('4.2 scaling intensity values has done')
+% %% 4.3 ) Final : Save data mat
+%         lfpwdata(i).face        =  reshape(gface,imsize,1);
+%         lfpwdata(i).groundtruth =  reshape(fixedgt,classsize,1);
+%           
+%         disp(['4.3 ' num2str(i) ' saved to dataset']);
+%        
+% 
+%   
+%     clear imagePath image gface  landmarkPoints fixedgt gbbox fixedImage
+%     clear rightBound rightBound upperBound bottomBound
+%     close all;
+% 
+%   pause(1)
+%    catch ME
+%        fileID = fopen('logfile_lfpw.txt','a');
+%        fprintf(fileID,'%20s %40s %3d\n',char(lfpwtrainImList{i,1}),(ME.identifier),(ME.stack.line));
+%        fclose(fileID);
+%        continue;
+%    end
+% end
 
 %% AFW DATASET
 % REQUIRES WORKING ZHU-RAMANAN  
@@ -88,34 +173,41 @@ clear delimiter fileID dataArray datasetRoot dirContent
 helenDataSetRoot = strcat(programRoot,'\','datasetstuff\HELEN68'); 
 helenTrainFolder = strcat(helenDataSetRoot,'\trainset');
 helenAnnotations = strcat(helenDataSetRoot,'\annotations');
-trainImList      = strcat(helenDataSetRoot,'\train_im_list.txt');
-fileID           = fopen(trainImList);
+helentrainImList = strcat(helenDataSetRoot,'\train_im_list.txt');
+fileID           = fopen(helentrainImList);
 scannedText = textscan(fileID,'%s');
 trainImages = scannedText{1,1};
 %% Create ground truth matrix for Helen
-clear fileID scannedText
-dirContent  =   dir(helenAnnotations);
-for i = 3:size(dirContent,1)
-    try
-    counter = i-2;
-    fileID = fopen(strcat(helenAnnotations,'\',dirContent(i).name));
-    scannedText = textscan(fileID,'%s');
-    helenGroundTruth(counter,1) = {(strcat(regexpi(dirContent(i).name,'\S*(?=\.pts)','match'),'.jpg'))}; 
-    helenGroundTruth(counter,2) = {[scannedText{1,1}(6:2:140) scannedText{1,1}(7:2:141)]};
-    fclose(fileID);
-    clear fileID scannedText counter
-    catch ME
-        disp(num2str(i));
-        disp(ME.identifier);
-    continue;
-    end
-end
-fclose all
-clear dirContent
-run_compilers;
-load('helenGroundTruth.mat'); % load ground-truth matrix
 
-allGroundTruths = cell(size(trainImages,1),3);
+% dirContent  =   dir(helenAnnotations);
+% for i = 3:size(dirContent,1)
+%     try
+%     counter = i-2;
+%     fileID = fopen(strcat(helenAnnotations,'\',dirContent(i).name));
+%     scannedText = textscan(fileID,'%s');
+%     helenGroundTruth(counter,1) = (strcat(regexpi(dirContent(i).name,'\S*(?=\.pts)','match'),'.jpg')); 
+%     stupid extension because gts are like ass 
+%     dim1 = scannedText{1,1}(6:2:140);
+%     dim2 = scannedText{1,1}(7:2:141);
+%     for j = 1 : size(dim1,1)
+%         dim1arr(j,1)= str2num(dim1{j,1});
+%         dim2arr(j,1)= str2num(dim2{j,1});
+%     end
+% %     helenGroundTruth(counter,2) = {[scannedText{1,1}(6:2:140) scannedText{1,1}(7:2:141)]};
+%     helenGroundTruth(counter,2) = {[dim1arr dim2arr]};
+% 
+%     fclose(fileID);
+%     clear fileID scannedText counter dim1 dim2 
+%     catch ME
+%         disp(num2str(i));
+%         disp(ME.identifier);
+%     continue;
+%     end
+% end
+% fclose all
+% clear dirContent
+% run_compilers; % compile zhu-ramanan face detector
+load('helenGroundTruthRaw.mat') % load ground-truth matrix
 
 for i = 1: size(trainImages,1)
    try
@@ -124,76 +216,37 @@ for i = 1: size(trainImages,1)
     imagePath       = strcat(helenTrainFolder,'\',trainImages{i,1},'.jpg');
     gt_index        = find(strcmp(helenGroundTruth(:,1),strcat(file_num,'_',subject_num,'.jpg')));
     image           = imread(imagePath);
-    disp(['1..Image: ' num2str(i) ' has loaded']);
-    groundTruth     = helenGroundTruth{gt_index,2};
-    %% 0.1 ) ReScale Images and Ground Truths
-    if size(image,1)>2000 || size(image,2)>2000
-        imscale = 0.3;
-    else
-        imscale = 1;
-    end
-    fixedImage      = imresize(image,imscale);
-    nonfixedsize    = size(image);  
-    fixedsize       = size(fixedImage);
-    scale           = nonfixedsize(1)/fixedsize(1);
-    fixedgt         = horzcat(groundTruth(:,1)/scale,groundTruth(:,2)/scale);
-    disp('2.. Image has scaled 0.3 smaller')
-    %% 0.2 ) Rotate the image and ground truth to enforse the zero slop 
-%     y = (fixedgt(135,2)-fixedgt(115,2));
-%     x = (fixedgt(135,1)-fixedgt(115,1));
-%     current_slop = atand(double(y)/double(x));
-%       if current_slop ~= 0
-%           clear rotated_face
-%           origin=size(rgb2gray(fixedImage))/2+.5; % center of the whole image
-%           rotated_face = imrotate(fixedImage,current_slop,'bilinear','crop ') ;
-%           rotated_face(find(rotated_face(:,:) == 0)) = median(median(rgb2gray(fixedImage))); % blur the image
-%           rotated_gts  = rotate_points(fixedgt,current_slop,[origin(1,2) ; origin(1,1)]);
-%           clear fixedImage fixedgt
-%           fixedImage = rotated_face;
-%           fixedgt = rotated_gts;
-%           clear rotated_face rotated_gts
-%           disp('3.. Enforcing 0 slope over face')
-%       end
-%     
-% %%     1 a ) Detect faces : Chehra face detector here
-%         disp('4.. Chehra is working to detect noise :) ')
-%     [chbbox,chlandmarkPoints] = chehra68Detector(fixedImage,imagePath);
-%%     1 b ) Detect faces : We will use zhu-ramanan face detector here 
-%     disp('Zhu ramanan working')
-%     [bbox,landmarkPoints] = zhuRamananDetector(fixedImage);
-    % % I wont use chehra to frame the image so I commented in
-%     try
-%         
-%         chface  =  fixedImage(chbbox(2):(chbbox(2)+chbbox(4)),chbbox(1):(chbbox(1)+chbbox(3)));
-%     catch ME
-%         if (strcmp(ME.identifier,'MATLAB:badsubscript'))
-%             try 
-%                 chface  =  fixedImage(chbbox(2):size(fixedImage,1),chbbox(1):(chbbox(1)+chbbox(3)));
-%             catch
-%                 chface  =  fixedImage(chbbox(2):size(fixedImage,1),chbbox(1):size(fixedImage,2));
-%             end
-%         end
-%     end
-% % I wont use zhu-ramanan face detector so I commented in
-%     try
-%           face    =  fixedImage(bbox(2):(bbox(2)+bbox(4)),bbox(1):(bbox(1)+bbox(3)));
-%     catch ME
-%         if (strcmp(ME.identifier,'MATLAB:badsubscript'))
-%             try
-%                 face    =  fixedImage(bbox(2):size(fixedImage,1),bbox(1):(bbox(1)+bbox(3)));
-%             catch
-%                 face    =  fixedImage(bbox(2):size(fixedImage,1),bbox(1):size(fixedImage,2));
-%             end
-%         end
-%     end
+    disp(['1 Image: ' num2str(i) ' has loaded']);
+    groundTruth     = helenGroundTruth{gt_index,2};    
+    fixedImage      = image;
+    fixedgt         = groundTruth;
+    disp(['1.b Ground truth: ' num2str(i) ' has loaded']);
+
 %% 2 a) Crop only the face frame using ground truth data  
-   disp('5..Cropping only the face out of the image')
+   disp('2..Cropping only the face out of the image')
     % specifiy borders :
-    rightBound   = [fixedgt(41,1),fixedgt(41,2)];
-    leftBound    = [fixedgt(1,1),fixedgt(1,2)];
-    upperBound   = [(fixedgt(160,1)+fixedgt(180,1)),(fixedgt(160,2)+fixedgt(180,2))]/2;
-    bottomBound  = [fixedgt(21,1),fixedgt(21,2)];
+    lefters         = [1:6];
+    righters        = [13:17];
+    deepers         = [7:12];
+    leftUppers      = [18:22];
+    rightUppers     = [23:27];
     
+    rightIndes    = find( fixedgt(:,1)==max(fixedgt(righters,1)));
+    leftIndes     = find( fixedgt(:,1)==min(fixedgt(lefters,1)));
+    leftTopIndes  = find( fixedgt(:,2)==min(fixedgt(leftUppers,2)));
+    rightTopIndes = find( fixedgt(:,2)==min(fixedgt(rightUppers,2)));
+    downIndes     = find( fixedgt(:,2)==max(fixedgt(deepers,2)));
+    
+    mostRightInd   = rightIndes(1,1);
+    mostLeftInd    = leftIndes(1,1);
+    mostLeftTopInd = leftTopIndes(1,1);
+    mostRightTopInd= rightTopIndes(1,1);
+    mostDownInd    = downIndes(1,1);
+    
+    rightBound   = [fixedgt(mostRightInd,1),fixedgt(mostRightInd,2)];
+    leftBound    = [fixedgt(mostLeftInd,1),fixedgt(mostLeftInd,2)];
+    upperBound   = [(fixedgt(mostLeftTopInd,1)+fixedgt(mostRightTopInd,1)),(fixedgt(mostLeftTopInd,2)+fixedgt(mostRightTopInd,2))]/2;
+    bottomBound  = [fixedgt(mostDownInd,1),fixedgt(mostDownInd,2)];
     % shift'em a little
     rightBound(1,1) = rightBound(1,1)+20;
     leftBound(1,1)  = leftBound(1,1)-20;
@@ -214,102 +267,54 @@ for i = 1: size(trainImages,1)
     end
     gbbox= [leftBound(1,1),upperBound(1,2), rightBound(1,1)-leftBound(1,1),bottomBound(1,2)-upperBound(1,2)];
     gface  =  fixedImage(gbbox(2):(gbbox(2)+gbbox(4)),gbbox(1):(gbbox(1)+gbbox(3)));
+    disp('2.a Face has extracted from image')
 %% 2 b) Shift ground truths accordingly  
     gshift = double(gbbox(1:2));
     fixedgt =  (horzcat((fixedgt(:,1)-gshift(1)),(fixedgt(:,2)-gshift(2))));
-    chlandmarkPoints = (horzcat((chlandmarkPoints(:,1)-gshift(1)),(chlandmarkPoints(:,2)-gshift(2))));
-%% 2 c ) Crop only the face frame using Zhu-Ramanan facial landmarks and shift gts accourdingly
-%     shift = bbox(1:2);
-%     fixedgt =  (horzcat((fixedgt(:,1)-shift(1)),(fixedgt(:,2)-shift(2))));
-%     landmarkPoints =  (horzcat((landmarkPoints(:,1)-shift(1)),(landmarkPoints(:,2)-shift(2))));
-% 2 d )  Crop only the face frame using Chehra facial landmarks and shift gts accourdingly
-%     chshift = chbbox(1:2);
-%     fixedgt =  (horzcat((fixedgt(:,1)-chshift(1)),(fixedgt(:,2)-chshift(2))));
-%     chlandmarkPoints = (horzcat((chlandmarkPoints(:,1)-chshift(1)),(chlandmarkPoints(:,2)-chshift(2))));
-
-
-    % 4 ) Extract 68 landmarks from 195 landmarks
-
-    final_landmarks  = [fixedgt(1,:);fixedgt(4,:);fixedgt(5,:);fixedgt(7,:);fixedgt(10,:);...
-        fixedgt(13,:);fixedgt(16,:);fixedgt(18,:);fixedgt(21,:);fixedgt(24,:);...
-        fixedgt(26,:);fixedgt(27,:);fixedgt(29,:);fixedgt(32,:);fixedgt(35,:);fixedgt(38,:);...
-        fixedgt(39,:);fixedgt(41,:);fixedgt(115,:);fixedgt(119,:);fixedgt(122,:);...
-        fixedgt(126,:);fixedgt(129,:);fixedgt(132,:);fixedgt(135,:);fixedgt(139,:);...
-        fixedgt(142,:);fixedgt(146,:);fixedgt(149,:);fixedgt(152,:);fixedgt(155,:);...
-        (fixedgt(158,:)+fixedgt(172,:))/2;(fixedgt(161,:)+fixedgt(169,:))/2;...
-        (fixedgt(163,:)+fixedgt(167,:))/2;fixedgt(165,:);fixedgt(175,:);...
-        (fixedgt(178,:)+fixedgt(192,:))/2;(fixedgt(181,:)+fixedgt(189,:))/2;...
-        (fixedgt(183,:)+fixedgt(187,:))/2;fixedgt(185,:);fixedgt(59,:);fixedgt(62,:);...
-        fixedgt(64,:);fixedgt(66,:);fixedgt(68,:);fixedgt(70,:);fixedgt(73,:);...
-        fixedgt(76,:);fixedgt(79,:);fixedgt(81,:);fixedgt(84,:);fixedgt(89,:);...
-        fixedgt(92,:);fixedgt(95,:);fixedgt(98,:);fixedgt(100,:);fixedgt(105,:);...
-        fixedgt(108,:);fixedgt(111,:);...
-        chlandmarkPoints(28,:);chlandmarkPoints(29,:);chlandmarkPoints(30,:);chlandmarkPoints(31,:);chlandmarkPoints(32,:);...
-        chlandmarkPoints(33,:);chlandmarkPoints(34,:);chlandmarkPoints(35,:);chlandmarkPoints(36,:)];
-
-
-%     h = figure
-%     subplot(2,2,1)
-%     imshow(face);
-%     hold on
-%     plot(landmarkPoints(:,1),landmarkPoints(:,2),'r.','MarkerSize',10)
-%     title('Subplot 1: Zhu-Ramanan Result')
-% 
-%     subplot(2,2,2)
-%     imshow(face);
-%     hold on
-%     plot(fixedgt(:,1),fixedgt(:,2),'r.','MarkerSize',10)
-%     title('Subplot 2: Ground-Truth Result')
-% 
-%     subplot(2,2,3)
-%     imshow(chface);
-%     hold on
-%     plot(final_landmarks(:,1),final_landmarks(:,2),'r.','MarkerSize',10)
-%     title('Subplot 3: Final Ground-Truth Result')
-%     
-%     subplot(2,2,4)
-%     imshow(chface);
-%     hold on
-%     plot(chlandmarkPoints(:,1),chlandmarkPoints(:,2),'r.','MarkerSize',10)
-%     title('Subplot 4: Chehra Ground-Truth Result')
-
+%% 3 ) Resize
+    nonresizedsize  = size(gface);
+    gface            = imresize(gface,[100 100]);
+    resizedsize     = size(gface);
+    scalex          = nonresizedsize(1)/resizedsize(1);
+    scaley          = nonresizedsize(1,2)/resizedsize(1,2);
+    fixedgt         = horzcat(fixedgt(:,1)/scaley,fixedgt(:,2)/scalex);
+    
+    disp('3 Resizing the face has done')
+%% 4.1 ) Draw and save results
     h = figure ;
     imshow(gface);
     hold on
-    plot(final_landmarks(:,1),final_landmarks(:,2),'r.','MarkerSize',10)
-    title(['image : ' num2str(i) ' name ' file_num ])
+    plot(fixedgt(:,1),fixedgt(:,2),'r.','MarkerSize',10)
+    title(['image : ' num2str(i)])
     
-%     if  current_slop ~= 0
-%         subplot(2,2,4)
-%         imshow(rotated_face);
-%         hold on
-%         plot(rotated_gts(:,1),rotated_gts(:,2),'y.','MarkerSize',10)
-%         title('Subplot 4: Final Ground-Truth Result with Rotation')
-%     end
-%     disp('press any key to continue');
-%     pause;
+    saveas(h,char(strcat('resultsHELEN/',file_num,'_',subject_num, '.jpg')))
+    disp('4.1 Face and gts has saved visually')
+  
+%% 4.2 ) Normalization : Scale intensity values
+    gface   =  im2double(gface);
+    gface   = normalizePic(gface);
+    fixedgt = normalizePic(fixedgt);
+    disp('4.2 scaling intensity values has done')
+%% 4.3 ) Final : Save data mat
+        helendata(i).face        =  reshape(gface,imsize,1);
+        helendata(i).groundtruth =  reshape(fixedgt,classsize,1);
+          
+        disp(['4.3 ' num2str(i) ' saved to dataset']);
+       
 
-    saveas(h,char(strcat('results/',file_num,'_',subject_num, '.jpg')))
-
-    allGroundTruths(i,1) = {helenGroundTruth};
-    allGroundTruths(i,2) = {chlandmarkPoints};
-    allGroundTruths(i,3) = {final_landmarks};
-% allGroundTruths(i,4) = {landmarkPoints};
-
-
-    clear imagePath image face  landmarkPoints chlandmarkPoints final_landmarks
-%     clear imagePath image face h landmarkPoints chlandmarkPoints final_landmarks
+  
+    clear imagePath image gface  landmarkPoints fixedgt gbbox fixedImage
+    clear rightBound rightBound upperBound bottomBound
     close all;
-
+    
   pause(1)
    catch ME
-       fileID = fopen('logfile.txt','a');
+       fileID = fopen('logfile_v2.txt','a');
        fprintf(fileID,'%20s %40s %3d\n',char(strcat(file_num,'_',subject_num,'.jpg')),(ME.identifier),(ME.stack.line));
        fclose(fileID);
        continue;
    end
 end
-disp('mkl');
 
 % DRAW
 %     imshow(dataset(i).images);
