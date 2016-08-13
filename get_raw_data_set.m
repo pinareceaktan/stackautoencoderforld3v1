@@ -17,11 +17,11 @@
 % X. Zhu, D. Ramanan. "Face detection, pose estimation and landmark localization in the wild" 
 % Computer Vision and Pattern Recognition (CVPR) Providence, Rhode Island, June 2012. 
 % website : https://www.ics.uci.edu/~xzhu/face/
-imsize = 100*100;
-classsize = 68*2;
-programRoot= pwd; 
-%% LFPW Dataset :
-
+imsize      = 100*100;
+classsize   = 68*2;
+programRoot = pwd; 
+datasetAll  = strcat(programRoot,'\datasetstuff\ALL68');
+% %% LFPW Dataset :
 % lfpwDataSetRoot     = strcat(programRoot,'\','datasetstuff','\LFPW');
 % lfpwTrainFolder     = strcat(lfpwDataSetRoot,'\trainset');
 % lfpwAnnotations     = strcat(lfpwDataSetRoot,'\annotations');
@@ -60,8 +60,8 @@ programRoot= pwd;
 % % 
 % % end
 % % disp('sdfsdf');
-% load('lfpwGroundTruth.mat');
-% 
+% load('lpfwGroundTruth.mat');
+
 % for i = 1: size(lfpwtrainImList,1)
 %    try
 %     imagePath       = strcat(lfpwTrainFolder,'\',lfpwtrainImList{i,1});
@@ -76,8 +76,8 @@ programRoot= pwd;
 % %% 2 a) Crop only the face frame using ground truth data  
 %    disp('2..Cropping only the face out of the image')
 %     % specifiy borders :
-%     lefters         = [1:6];
-%     righters        = [13:17];
+%     lefters         = [1:6,18];
+%     righters        = [13:17,27];
 %     deepers         = [7:12];
 %     leftUppers      = [18:22];
 %     rightUppers     = [23:27];
@@ -96,14 +96,14 @@ programRoot= pwd;
 %     
 %     rightBound   = [fixedgt(mostRightInd,1),fixedgt(mostRightInd,2)];
 %     leftBound    = [fixedgt(mostLeftInd,1),fixedgt(mostLeftInd,2)];
-%     upperBound   = [(fixedgt(mostLeftTopInd,1)+fixedgt(mostRightTopInd,1)),(fixedgt(mostLeftTopInd,2)+fixedgt(mostRightTopInd,2))]/2;
+%     upperBound   = [(fixedgt(mostLeftTopInd,1)+fixedgt(mostRightTopInd,1))/2,min(fixedgt(mostLeftTopInd,2),fixedgt(mostRightTopInd,2))];
 %     bottomBound  = [fixedgt(mostDownInd,1),fixedgt(mostDownInd,2)];
 %     
 %     % shift'em a little
-%     rightBound(1,1) = rightBound(1,1)+20;
-%     leftBound(1,1)  = leftBound(1,1)-20;
-%     upperBound(1,2) = upperBound(1,2)-20;
-%     bottomBound(1,2)= bottomBound(1,2)+20;
+%     rightBound(1,1) = rightBound(1,1)+10;
+%     leftBound(1,1)  = leftBound(1,1)-10;
+%     upperBound(1,2) = upperBound(1,2)-10;
+%     bottomBound(1,2)= bottomBound(1,2)+10;
 %     % check borders
 %     if leftBound(1,1)<0  % left border
 %         leftBound(1,1) = 0;
@@ -140,25 +140,31 @@ programRoot= pwd;
 %     title(['image : ' num2str(i)])
 %     
 %     saveas(h,char(strcat('resultsLFPW/',lfpwtrainImList{i,1})))
+%     imwrite(gface,strcat(datasetAll,'/lfpw_',lfpwtrainImList{i,1}));
 %     disp('4.1 Face and gts has saved visually')
 % %% 4.2 ) Normalization : Scale intensity values
-%         gface   =  im2double(gface);
+%         gface   = im2double(gface);
 %         gface   = normalizePic(gface);
 %         fixedgt = normalizePic(fixedgt);
 %         disp('4.2 scaling intensity values has done')
 % %% 4.3 ) Final : Save data mat
 %         lfpwdata(i).face        =  reshape(gface,imsize,1);
 %         lfpwdata(i).groundtruth =  reshape(fixedgt,classsize,1);
-%           
+% %         prompt = 'What is the pose class? ';
+% %         x = input(prompt);  
+% %         lfpwdata(i).pose = x;
 %         disp(['4.3 ' num2str(i) ' saved to dataset']);
-%        
+% %% 5 ) Clear'em all       
+%         clear gt_index image groundTruth fixedImage fixedgt
+%         clear lefters righters deepers leftUppers rightUppers
+%         clear rightIndes leftIndes leftTopIndes rightTopIndes downIndes
+%         clear mostRightInd mostLeftInd mostLeftTopInd mostRightTopInd mostDownInd
+%         clear rightBound leftBound upperBound bottomBound
+%         clear gbbox
+%         clear gface gshift nonresizedsize resizedsize scalex scaley h
+%         close all;
 % 
-%   
-%     clear imagePath image gface  landmarkPoints fixedgt gbbox fixedImage
-%     clear rightBound rightBound upperBound bottomBound
-%     close all;
-% 
-%   pause(1)
+%   pause(0.1)
 %    catch ME
 %        fileID = fopen('logfile_lfpw.txt','a');
 %        fprintf(fileID,'%20s %40s %3d\n',char(lfpwtrainImList{i,1}),(ME.identifier),(ME.stack.line));
@@ -166,18 +172,168 @@ programRoot= pwd;
 %        continue;
 %    end
 % end
-
-%% AFW DATASET
-% REQUIRES WORKING ZHU-RAMANAN  
-%% HELEN DATASET
-helenDataSetRoot = strcat(programRoot,'\','datasetstuff\HELEN68'); 
-helenTrainFolder = strcat(helenDataSetRoot,'\trainset');
-helenAnnotations = strcat(helenDataSetRoot,'\annotations');
-helentrainImList = strcat(helenDataSetRoot,'\train_im_list.txt');
-fileID           = fopen(helentrainImList);
-scannedText = textscan(fileID,'%s');
-trainImages = scannedText{1,1};
-%% Create ground truth matrix for Helen
+% clear dirContent
+% disp('LFPW done!')
+load('lpfwdata.mat');
+% %% AFW DATASET
+% afwDataSetRoot = strcat(programRoot,'\','datasetstuff\AFW68'); 
+% afwTrainFolder = strcat(afwDataSetRoot,'\trainset');
+% afwAnnotations = strcat(afwDataSetRoot,'\annotations');
+% dirContent     = dir(afwAnnotations);
+% afwtrainImList     = cell(size(dirContent,1)-2,1);
+% afwAnnotationList  = cell(size(dirContent,1)-2,1);
+% for i = 3 : size(dirContent,1)
+%     afwtrainImList(i-2,1)     =  strcat(regexpi(dirContent(i).name,'\S*(?=\.pts)','match'),'.jpg');
+%     afwAnnotationList(i-2,1)  =  {dirContent(i).name};
+% end
+% % Create ground truth matrix for AFW
+% 
+% for i = 1: size(afwAnnotationList,1)
+%     try
+%         fileID                  = fopen(strcat(afwAnnotations,'\',afwAnnotationList{i,1}));
+%         scannedText             = textscan(fileID,'%s');
+%         afwGroundTruth(i,1)     = afwtrainImList(i,1);
+%         %     stupid extension because gts are like ass
+%         dim1 = scannedText{1,1}(6:2:140);
+%         dim2 = scannedText{1,1}(7:2:141);
+%         for j = 1 : size(dim1,1)
+%             dim1arr(j,1)= str2num(dim1{j,1});
+%             dim2arr(j,1)= str2num(dim2{j,1});
+%         end
+%         afwGroundTruth(i,2) = {[dim1arr dim2arr]};
+%         fclose(fileID);
+%         clear fileID scannedText dim1 dim2
+%     catch ME
+%          disp(num2str(i));
+%          disp(ME.identifier);
+%          continue;
+%     end
+% end
+% load('afwGroundTruth.mat')
+% load('afwdata.mat');
+% for i = 1:size(afwtrainImList,1)
+%     try
+%         imagePath       = strcat(afwTrainFolder,'\',afwtrainImList{i,1});
+%         gt_index        = find(strcmp(afwGroundTruth(:,1),afwtrainImList{i,1}));
+%         image           = imread(imagePath);
+%         disp(['1 Image: ' num2str(i) ' has loaded']);
+%         groundTruth     = afwGroundTruth{gt_index,2};
+%         fixedImage      = image;
+%         fixedgt         = groundTruth;
+%         disp(['1.b Ground truth: ' num2str(i) ' has loaded']);
+%         
+% %% 2 a) Crop only the face frame using ground truth data  
+%    disp('2..Cropping only the face out of the image')
+%     % specifiy borders :
+%     lefters         = [1:6,18];
+%     righters        = [13:17,27];
+%     deepers         = [7:12];
+%     leftUppers      = [18:22];
+%     rightUppers     = [23:27];
+%     
+%     rightIndes    = find( fixedgt(:,1)==max(fixedgt(righters,1)));
+%     leftIndes     = find( fixedgt(:,1)==min(fixedgt(lefters,1)));
+%     leftTopIndes  = find( fixedgt(:,2)==min(fixedgt(leftUppers,2)));
+%     rightTopIndes = find( fixedgt(:,2)==min(fixedgt(rightUppers,2)));
+%     downIndes     = find( fixedgt(:,2)==max(fixedgt(deepers,2)));
+%     
+%     mostRightInd   = rightIndes(1,1);
+%     mostLeftInd    = leftIndes(1,1);
+%     mostLeftTopInd = leftTopIndes(1,1);
+%     mostRightTopInd= rightTopIndes(1,1);
+%     mostDownInd    = downIndes(1,1);
+%     
+%     rightBound   = [fixedgt(mostRightInd,1),fixedgt(mostRightInd,2)];
+%     leftBound    = [fixedgt(mostLeftInd,1),fixedgt(mostLeftInd,2)];
+%     upperBound   = [(fixedgt(mostLeftTopInd,1)+fixedgt(mostRightTopInd,1))/2,min(fixedgt(mostLeftTopInd,2),fixedgt(mostRightTopInd,2))];;
+%     bottomBound  = [fixedgt(mostDownInd,1),fixedgt(mostDownInd,2)];
+%     
+%     % shift'em a little
+%     rightBound(1,1) = rightBound(1,1)+10;
+%     leftBound(1,1)  = leftBound(1,1)-10;
+%     upperBound(1,2) = upperBound(1,2)-10;
+%     bottomBound(1,2)= bottomBound(1,2)+10;
+%     % check borders
+%     if leftBound(1,1)<0  % left border
+%         leftBound(1,1) = 0;
+%     end
+%     if rightBound(1,1)>size(fixedImage,2) % right border
+%         rightBound(1,1) = size(fixedImage,2);
+%     end
+%     if upperBound(1,2)<0
+%         upperBound(1,2)= 0;
+%     end
+%     if   bottomBound(1,2) > size(fixedImage,1)
+%         bottomBound(1,2) = size(fixedImage,1);
+%     end
+%     gbbox= [leftBound(1,1),upperBound(1,2), rightBound(1,1)-leftBound(1,1),bottomBound(1,2)-upperBound(1,2)];
+%     gface  =  fixedImage(gbbox(2):(gbbox(2)+gbbox(4)),gbbox(1):(gbbox(1)+gbbox(3)));
+%     disp('2.a Face has extracted from image')
+%     %% 2 b) Shift ground truths accordingly  
+%     gshift = double(gbbox(1:2));
+%     fixedgt =  (horzcat((fixedgt(:,1)-gshift(1)),(fixedgt(:,2)-gshift(2))));
+% %% 3 ) Resize
+%     nonresizedsize  = size(gface);
+%     gface           = imresize(gface,[100 100]);
+%     resizedsize     = size(gface);
+%     scalex          = nonresizedsize(1)/resizedsize(1);
+%     scaley          = nonresizedsize(1,2)/resizedsize(1,2);
+%     fixedgt         = horzcat(fixedgt(:,1)/scaley,fixedgt(:,2)/scalex);
+%     
+%     disp('3 Resizing the face has done')
+%  %% 4.1 ) Draw and save results
+%     h = figure ;
+%     imshow(gface);
+%     hold on
+%     plot(fixedgt(:,1),fixedgt(:,2),'r.','MarkerSize',10)
+%     title(['image : ' num2str(i)])
+%     
+%     saveas(h,char(strcat('resultsAFW/',afwtrainImList{i,1})))
+%     imwrite(gface,strcat(datasetAll,'/afw_',afwtrainImList{i,1}));
+%     disp('4.1 Face and gts has saved visually')
+% %% 4.2 ) Normalization : Scale intensity values
+%         gface   =  im2double(gface);
+%         gface   = normalizePic(gface);
+%         fixedgt = normalizePic(fixedgt);
+%         disp('4.2 scaling intensity values has done')
+% %% 4.3 ) Final : Save data mat
+%         afwdata(i).face        =  reshape(gface,imsize,1);
+%         afwdata(i).groundtruth =  reshape(fixedgt,classsize,1);
+% %         prompt = 'What is the pose class? ';
+% %         xy = input(prompt);
+% %         afwdata(i).pose = xy;
+% %         disp(['4.3 ' num2str(i) ' saved to dataset']);
+%         
+%         clear gt_index image groundTruth fixedImage fixedgt
+%         clear lefters righters deepers leftUppers rightUppers
+%         clear rightIndes leftIndes leftTopIndes rightTopIndes downIndes
+%         clear mostRightInd mostLeftInd mostLeftTopInd mostRightTopInd mostDownInd
+%         clear rightBound leftBound upperBound bottomBound
+%         clear gbbox
+%         clear gface gshift nonresizedsize resizedsize scalex scaley h
+%         close all;
+%         close all;
+% 
+%         pause(0.1);
+%     catch
+%         fileID = fopen('logfile_afw.txt','a');
+%         fprintf(fileID,'%20s %40s %3d\n',char(lfpwtrainImList{i,1}),(ME.identifier),(ME.stack.line));
+%         fclose(fileID);
+%         continue;
+%     end
+% end
+% clear dirContent
+% disp('hdgsd');
+load('afwdata.mat');
+% %% HELEN DATASET
+% helenDataSetRoot = strcat(programRoot,'\','datasetstuff\HELEN68'); 
+% helenTrainFolder = strcat(helenDataSetRoot,'\trainset');
+% helenAnnotations = strcat(helenDataSetRoot,'\annotations');
+% helentrainImList = strcat(helenDataSetRoot,'\train_im_list.txt');
+% fileID           = fopen(helentrainImList);
+% scannedText = textscan(fileID,'%s');
+% trainImages = scannedText{1,1};
+% %% Create ground truth matrix for Helen
 
 % dirContent  =   dir(helenAnnotations);
 % for i = 3:size(dirContent,1)
@@ -207,113 +363,151 @@ trainImages = scannedText{1,1};
 % fclose all
 % clear dirContent
 % run_compilers; % compile zhu-ramanan face detector
-load('helenGroundTruthRaw.mat') % load ground-truth matrix
-
-for i = 1: size(trainImages,1)
-   try
-    file_num        = regexpi(trainImages{i,1},'\d*(?=\_)','match');
-    subject_num     = regexpi(trainImages{i,1},'(?<=_)\d*','match'); 
-    imagePath       = strcat(helenTrainFolder,'\',trainImages{i,1},'.jpg');
-    gt_index        = find(strcmp(helenGroundTruth(:,1),strcat(file_num,'_',subject_num,'.jpg')));
-    image           = imread(imagePath);
-    disp(['1 Image: ' num2str(i) ' has loaded']);
-    groundTruth     = helenGroundTruth{gt_index,2};    
-    fixedImage      = image;
-    fixedgt         = groundTruth;
-    disp(['1.b Ground truth: ' num2str(i) ' has loaded']);
-
-%% 2 a) Crop only the face frame using ground truth data  
-   disp('2..Cropping only the face out of the image')
-    % specifiy borders :
-    lefters         = [1:6];
-    righters        = [13:17];
-    deepers         = [7:12];
-    leftUppers      = [18:22];
-    rightUppers     = [23:27];
-    
-    rightIndes    = find( fixedgt(:,1)==max(fixedgt(righters,1)));
-    leftIndes     = find( fixedgt(:,1)==min(fixedgt(lefters,1)));
-    leftTopIndes  = find( fixedgt(:,2)==min(fixedgt(leftUppers,2)));
-    rightTopIndes = find( fixedgt(:,2)==min(fixedgt(rightUppers,2)));
-    downIndes     = find( fixedgt(:,2)==max(fixedgt(deepers,2)));
-    
-    mostRightInd   = rightIndes(1,1);
-    mostLeftInd    = leftIndes(1,1);
-    mostLeftTopInd = leftTopIndes(1,1);
-    mostRightTopInd= rightTopIndes(1,1);
-    mostDownInd    = downIndes(1,1);
-    
-    rightBound   = [fixedgt(mostRightInd,1),fixedgt(mostRightInd,2)];
-    leftBound    = [fixedgt(mostLeftInd,1),fixedgt(mostLeftInd,2)];
-    upperBound   = [(fixedgt(mostLeftTopInd,1)+fixedgt(mostRightTopInd,1)),(fixedgt(mostLeftTopInd,2)+fixedgt(mostRightTopInd,2))]/2;
-    bottomBound  = [fixedgt(mostDownInd,1),fixedgt(mostDownInd,2)];
-    % shift'em a little
-    rightBound(1,1) = rightBound(1,1)+20;
-    leftBound(1,1)  = leftBound(1,1)-20;
-    upperBound(1,2) = upperBound(1,2)-20;
-    bottomBound(1,2)= bottomBound(1,2)+20;
-    % check borders
-    if leftBound(1,1)<0  % left border
-        leftBound(1,1) = 0;
-    end
-    if rightBound(1,1)>size(fixedImage,2) % right border
-        rightBound(1,1) = size(fixedImage,2);
-    end
-    if upperBound(1,2)<0
-        upperBound(1,2)= 0;
-    end
-    if   bottomBound(1,2) > size(fixedImage,1)
-        bottomBound(1,2) = size(fixedImage,1);
-    end
-    gbbox= [leftBound(1,1),upperBound(1,2), rightBound(1,1)-leftBound(1,1),bottomBound(1,2)-upperBound(1,2)];
-    gface  =  fixedImage(gbbox(2):(gbbox(2)+gbbox(4)),gbbox(1):(gbbox(1)+gbbox(3)));
-    disp('2.a Face has extracted from image')
-%% 2 b) Shift ground truths accordingly  
-    gshift = double(gbbox(1:2));
-    fixedgt =  (horzcat((fixedgt(:,1)-gshift(1)),(fixedgt(:,2)-gshift(2))));
-%% 3 ) Resize
-    nonresizedsize  = size(gface);
-    gface            = imresize(gface,[100 100]);
-    resizedsize     = size(gface);
-    scalex          = nonresizedsize(1)/resizedsize(1);
-    scaley          = nonresizedsize(1,2)/resizedsize(1,2);
-    fixedgt         = horzcat(fixedgt(:,1)/scaley,fixedgt(:,2)/scalex);
-    
-    disp('3 Resizing the face has done')
-%% 4.1 ) Draw and save results
-    h = figure ;
-    imshow(gface);
-    hold on
-    plot(fixedgt(:,1),fixedgt(:,2),'r.','MarkerSize',10)
-    title(['image : ' num2str(i)])
-    
-    saveas(h,char(strcat('resultsHELEN/',file_num,'_',subject_num, '.jpg')))
-    disp('4.1 Face and gts has saved visually')
-  
-%% 4.2 ) Normalization : Scale intensity values
-    gface   =  im2double(gface);
-    gface   = normalizePic(gface);
-    fixedgt = normalizePic(fixedgt);
-    disp('4.2 scaling intensity values has done')
-%% 4.3 ) Final : Save data mat
-        helendata(i).face        =  reshape(gface,imsize,1);
-        helendata(i).groundtruth =  reshape(fixedgt,classsize,1);
+% load('helenGroundTruthRaw.mat') % load ground-truth matrix
+% 
+% for i = 1 : size(trainImages,1)
+%    try
+%     file_num        = regexpi(trainImages{i,1},'\d*(?=\_)','match');
+%     subject_num     = regexpi(trainImages{i,1},'(?<=_)\d*','match'); 
+%     imagePath       = strcat(helenTrainFolder,'\',trainImages{i,1},'.jpg');
+%     gt_index        = find(strcmp(helenGroundTruth(:,1),strcat(file_num,'_',subject_num,'.jpg')));
+%     image           = imread(imagePath);
+%     disp(['1 Image: ' num2str(i) ' has loaded']);
+%     groundTruth     = helenGroundTruth{gt_index,2};    
+%     fixedImage      = image;
+%     fixedgt         = groundTruth;
+%     disp(['1.b Ground truth: ' num2str(i) ' has loaded']);
+% 
+% %% 2 a) Crop only the face frame using ground truth data  
+%    disp('2..Cropping only the face out of the image')
+%     % specifiy borders :
+%     lefters         = [1:6,18];
+%     righters        = [13:17,27];
+%     deepers         = [7:12];
+%     leftUppers      = [18:22];
+%     rightUppers     = [23:27];
+%     
+%     rightIndes    = find( fixedgt(:,1)==max(fixedgt(righters,1)));
+%     leftIndes     = find( fixedgt(:,1)==min(fixedgt(lefters,1)));
+%     leftTopIndes  = find( fixedgt(:,2)==min(fixedgt(leftUppers,2)));
+%     rightTopIndes = find( fixedgt(:,2)==min(fixedgt(rightUppers,2)));
+%     downIndes     = find( fixedgt(:,2)==max(fixedgt(deepers,2)));
+%     
+%     mostRightInd   = rightIndes(1,1);
+%     mostLeftInd    = leftIndes(1,1);
+%     mostLeftTopInd = leftTopIndes(1,1);
+%     mostRightTopInd= rightTopIndes(1,1);
+%     mostDownInd    = downIndes(1,1);
+%     
+%     rightBound   = [fixedgt(mostRightInd,1),fixedgt(mostRightInd,2)];
+%     leftBound    = [fixedgt(mostLeftInd,1),fixedgt(mostLeftInd,2)];
+%     upperBound   = [(fixedgt(mostLeftTopInd,1)+fixedgt(mostRightTopInd,1))/2,min(fixedgt(mostLeftTopInd,2),fixedgt(mostRightTopInd,2))];
+%     bottomBound  = [fixedgt(mostDownInd,1),fixedgt(mostDownInd,2)];
+%     % shift'em a little
+%     rightBound(1,1) = rightBound(1,1)+20;
+%     leftBound(1,1)  = leftBound(1,1)-20;
+%     upperBound(1,2) = upperBound(1,2)-20;
+%     bottomBound(1,2)= bottomBound(1,2)+20;
+%     % check borders
+%     if leftBound(1,1)<0  % left border
+%         leftBound(1,1) = 0.1;
+%     end
+%     if rightBound(1,1)>size(fixedImage,2) % right border
+%         rightBound(1,1) = size(fixedImage,2);
+%     end
+%     if upperBound(1,2)<0
+%         upperBound(1,2)= 0.1;
+%     end
+%     if   bottomBound(1,2) > size(fixedImage,1)
+%         bottomBound(1,2) = size(fixedImage,1);
+%     end
+%     gbbox= [leftBound(1,1),upperBound(1,2), rightBound(1,1)-leftBound(1,1),bottomBound(1,2)-upperBound(1,2)];
+%     gface  =  fixedImage(gbbox(2):(gbbox(2)+gbbox(4)),gbbox(1):(gbbox(1)+gbbox(3)));
+%     disp('2.a Face has extracted from image')
+% %% 2 b) Shift ground truths accordingly  
+%     gshift = double(gbbox(1:2));
+%     fixedgt =  (horzcat((fixedgt(:,1)-gshift(1)),(fixedgt(:,2)-gshift(2))));
+% %% 3 ) Resize
+%     nonresizedsize  = size(gface);
+%     gface            = imresize(gface,[100 100]);
+%     resizedsize     = size(gface);
+%     scalex          = nonresizedsize(1)/resizedsize(1);
+%     scaley          = nonresizedsize(1,2)/resizedsize(1,2);
+%     fixedgt         = horzcat(fixedgt(:,1)/scaley,fixedgt(:,2)/scalex);
+%     
+%     disp('3 Resizing the face has done')
+% %% 4.1 ) Draw and save results
+%     h = figure ;
+%     imshow(gface);
+%     hold on
+%     plot(fixedgt(:,1),fixedgt(:,2),'r.','MarkerSize',10)
+%     title(['image : ' num2str(i)])
+%     
+%     saveas(h,char(strcat('resultsHELEN/',file_num,'_',subject_num, '.jpg')))
+%     imwrite(gface,char(strcat(datasetAll,'/helen_',file_num,'_',subject_num, '.jpg')));
+%     disp('4.1 Face and gts has saved visually')
+%   
+% %% 4.2 ) Normalization : Scale intensity values
+%     gface   = im2double(gface);
+%     gface   = normalizePic(gface);
+%     fixedgt = normalizePic(fixedgt);
+%     disp('4.2 scaling intensity values has done')
+% %% 4.3 ) Final : Save data mat
+%         helendata(i).face        =  reshape(gface,imsize,1);
+%         helendata(i).groundtruth =  reshape(fixedgt,classsize,1);
+%         prompt = 'What is the pose class? ';
+%         xyz = input(prompt);
+%         helendata(i).pose = xyz;
+%         disp(['4.3 ' num2str(i) ' saved to dataset']);
+%        
+% 
+%  %% 5 ) Clear'em all       
+%         clear gt_index image groundTruth fixedImage fixedgt
+%         clear lefters righters deepers leftUppers rightUppers
+%         clear rightIndes leftIndes leftTopIndes rightTopIndes downIndes
+%         clear mostRightInd mostLeftInd mostLeftTopInd mostRightTopInd mostDownInd
+%         clear rightBound leftBound upperBound bottomBound
+%         clear gbbox
+%         clear gface gshift nonresizedsize resizedsize scalex scaley h
+%         close all;
+%     
+%   pause(1)
+%    catch ME
+%        fileID = fopen('logfile_v2.txt','a');
+%        fprintf(fileID,'%20s %40s %3d\n',char(strcat(file_num,'_',subject_num,'.jpg')),(ME.identifier),(ME.stack.line));
+%        fclose(fileID);
+%        continue;
+%    end
+% end
+load('helendata.mat');
+disp('dfsfg');
+%% Data Matrix : concatanate them 
+data = [lfpwdata,afwdata,helendata];
+%% Translate them
+counter = 1;
+for i = 1: size(data,2)
+    if data(i).pose ~= 2
+        image                   = reshape(data(i).face,100,100);
+        tform                   = affine2d([-1 0 0; 0 1 0; 0 0 1]);
+        translatedIm            = imwarp(image,tform);
+        augmentedData(counter).face   = reshape(translatedIm,imsize,1);
+        S = transform_points(reshape(data(i).groundtruth,68,2));
+        disp('dfs');
+        switch data(i).pose
+            case 1
+                augmentedData(counter).pose = 3;
+            case 3
+                augmentedData(counter).pose = 1;
+         end
           
-        disp(['4.3 ' num2str(i) ' saved to dataset']);
-       
+%         figure 
+%         subplot(1,2,1)
+%         imshow(image)
+%         subplot(1,2,2)
+%         imshow(translatedIm)
+        counter = counter+1;
+    end
 
-  
-    clear imagePath image gface  landmarkPoints fixedgt gbbox fixedImage
-    clear rightBound rightBound upperBound bottomBound
-    close all;
-    
-  pause(1)
-   catch ME
-       fileID = fopen('logfile_v2.txt','a');
-       fprintf(fileID,'%20s %40s %3d\n',char(strcat(file_num,'_',subject_num,'.jpg')),(ME.identifier),(ME.stack.line));
-       fclose(fileID);
-       continue;
-   end
 end
 
 % DRAW
