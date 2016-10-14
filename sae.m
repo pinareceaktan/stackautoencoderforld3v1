@@ -13,6 +13,7 @@ sparsityParam   = 0.1;      % desired average activation of the hidden units.
 lambda          = 1e-2;     % weight decay parameter       
 beta            = 3;        % weight of sparsity penalty term       
 
+
 %% STEP 1: Load train data from three datasets: LFPW,AFW and HELEN
 %% Uncomment if you fetch data set in meanwhile 
 [train_images,yi,pose_labels] = get_raw_data_set('GCNMean0Std1Normalized');
