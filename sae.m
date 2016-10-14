@@ -1,88 +1,84 @@
 %%  Stacked Autoencoder implementation based on the courses of NG in CS294A/CS294W
 %% STEP 0: Parameter initialization
-inputSize       = 100 * 100;% image size
+inputSize       = 50 * 50;% image size
 outputSize      = 68*2;     % 136 coordinates will be extracted
-hiddenSizeL1    = 500;      % auto encoder extracts 500 features 
+hiddenSizeL1    = 1600;     % first layer auto encoder extracts 1600 features 
+hiddenSizeL2    = 900;      % second layer auto encoder extracts 900 features
+hiddenSizeL3    = 400;      % third layer auto encoder extracts 400 features
 perceptronSize  = 200;      % perceptron has 200 neurons
-hiddenSizeL2 =  300; 
-sparsityParam = 0.1;   % desired average activation of the hidden units.
-                       % (This was denoted by the Greek alphabet rho, which looks like a lower-case "p",
-		               %  in the lecture notes). 
-lambda = 3e-3;     % weight decay parameter       
-beta = 3;              % weight of sparsity penalty term       
+ 
+sparsityParam   = 0.1;      % desired average activation of the hidden units.
+                            % (This was denoted by the Greek alphabet rho, which looks like a lower-case "p",
+                            %  in the lecture notes). 
+lambda          = 1e-2;     % weight decay parameter       
+beta            = 3;        % weight of sparsity penalty term       
 
-%% STEP 1: Load data from the MultiPie database
+%% STEP 1: Load train data from three datasets: LFPW,AFW and HELEN
 %% Uncomment if you fetch data set in meanwhile 
-[trainData,trainLabels] = get_data_set('train');
-
-% load('trainData.mat'); % 10000*1900
-% load('yi.mat');        % 136*1900     
-
-%% STEP 2: Train the first sparse autoencoder
+[train_images,yi,pose_labels] = get_raw_data_set('GCNMean0Std1Normalized');
+% load('train_images.mat'); % 2500*4573
+% load('yi.mat');           % 2500*4573     
+disp('eben')
+%% STEP 2: Layer 1 : Train the first sparse autoencoder
 %  This trains the first sparse autoencoder on the unlabelled training
 %  images
 %  Randomly initialize the parameters for layer 1 
 
 addpath minFunc/
 options.Method = 'lbfgs'; % optimization algorithm
-options.maxIter = 400; % Maximum number of iterations of L-BFGS to run aslýnda 400
+options.maxIter = 500; % Maximum number of iterations of L-BFGS to run aslýnda 400
 options.display = 'on';
 %% Uncomment if you extract features meanwhile 
-% sae1Theta = initializeParameters(hiddenSizeL1, inputSize);
+sae1Theta = initializeParameters(hiddenSizeL1, inputSize);
 t1 = tic;
-% [sae1OptTheta, cost] = minFunc(@(p) sparseAutoencoderCost(...
-%     p, inputSize, hiddenSizeL1, lambda, sparsityParam, beta, trainData), ...
-%     sae1Theta, options);
-load('sae1OptTheta.mat');
+[sae1OptTheta, cost] = minFunc(@(p) sparseAutoencoderCost(...
+    p, inputSize, hiddenSizeL1, lambda, sparsityParam, beta, train_images), ...
+    sae1Theta, options);
+disp('Layer 1 : Thetas calculated');
+% load('sae1OptTheta.mat');
 toc(t1);
 % -------------------------------------------------------------------------
 %%======================================================================
-%% STEP 2: Train the second sparse autoencoder or your classifier  
+%% STEP 2: Feed Forward First Layer
 %  This trains the second sparse autoencoder on the first autoencoder
 %  featurs.
-%% Uncomment if you are wxtracting sea1features in meanwhile
-% [sae1Features] = feedForwardAutoencoder(sae1OptTheta, hiddenSizeL1, ...
-%                                         inputSize, trainData);
+%% Uncomment if you are extracting sea1features in meanwhile
+[sae1Features] = feedForwardAutoencoder(sae1OptTheta, hiddenSizeL1, ...
+                                        inputSize, train_images);
+disp('Layer 1 : Features calculated');
+
 % save sae1Features;
-load('sae1Features.mat')
+% load('sae1Features.mat')
 
-%% 2nd sparse auto encoder
+%% STEP 3 :  Layer 2 : Train the second sparse autoencoder
 sae2Theta = initializeParameters(hiddenSizeL2, hiddenSizeL1);
-
-%% ---------------------- YOUR CODE HERE  ---------------------------------
-%  Instructions: Train the second layer sparse autoencoder, this layer has
-%                an hidden size of "hiddenSizeL2" and an inputsize of
-%                "hiddenSizeL1"
-%
-%                You should store the optimal parameters in sae2OptTheta
-
 t2 = tic;
-% [sae2OptTheta, cost] = minFunc(@(p) sparseAutoencoderCost(...
-%     p, hiddenSizeL1, hiddenSizeL2, lambda, sparsityParam, beta, sae1Features), ...
-%     sae2Theta, options);
-% toc(t2);
+[sae2OptTheta, cost] = minFunc(@(p) sparseAutoencoderCost(...
+    p, hiddenSizeL1, hiddenSizeL2, lambda, sparsityParam, beta, sae1Features), ...
+    sae2Theta, options);
+toc(t2);
+disp('Layer 2 : Thetas calculated');
 % save sae2OptTheta;
-%  pause(5);
-% [sae2Features] = feedForwardAutoencoder(sae2OptTheta, hiddenSizeL2, ...
-%                                         hiddenSizeL1, sae1Features);
-% save sae2Features;
+%% STEP 3: Feed Forward Second Layer
 
+[sae2Features] = feedForwardAutoencoder(sae2OptTheta, hiddenSizeL2, ...
+                                        hiddenSizeL1, sae1Features);
+save sae2Features;
+disp('Layer 2 is done');
 load sae2Features;
 %  pause(5);
-%% STEP 3 : Train a multilayer perceptron
+%% STEP 4 : Train a multilayer perceptron
 t3 = tic;
-% perceptronTheta = initializePerceptronParams(outputSize,perceptronSize,hiddenSizeL2);
-% perceptronOptions.Method = 'lbfgs';
-% perceptronOptions.display = 'on';
-% perceptronOptions.maxIter = 400; % aslýnda 400
-% % perceptronun inpt size i hiddensizel1 , arada da perceptron size kadar
-% % nöron var
-% [saeMlpOptTheta, cost] = minFunc(@(p) mlpCost(...
-%     p, hiddenSizeL2,perceptronSize,outputSize,lambda,sae2Features,yi), ...
-%     perceptronTheta, perceptronOptions);
-% % load('saeMlpOptTheta.mat');
-% toc(t3);
-% 
+perceptronTheta = initializePerceptronParams(outputSize,hiddenSizeL3);
+perceptronOptions.Method = 'lbfgs';
+perceptronOptions.display = 'on';
+perceptronOptions.maxIter = 400; 
+[saeMlpOptTheta, cost] = minFunc(@(p) mlpCost(...
+    p, hiddenSizeL2,perceptronSize,outputSize,lambda,sae2Features,yi), ...
+    perceptronTheta, perceptronOptions);
+% load('saeMlpOptTheta.mat');
+toc(t3);
+disp('Perceptron has trained ');
 % save saeMlpOptTheta;
 load saeMlpOptTheta;
  pause(5);
@@ -91,19 +87,19 @@ load saeMlpOptTheta;
 % Implement the stackedAECost to give the combined cost of the whole model
 % then run this cell.
 
-% Initialize the stack using the parameters learned
-stack = cell(1,1);
-stack{1}.w = reshape(sae1OptTheta(1:hiddenSizeL1*inputSize), ...
-                     hiddenSizeL1, inputSize);
-stack{1}.b = sae1OptTheta(2*hiddenSizeL1*inputSize+1:2*hiddenSizeL1*inputSize+hiddenSizeL1);
-
-stack{2}.w = reshape(sae2OptTheta(1:hiddenSizeL2*hiddenSizeL1), ...
-                     hiddenSizeL2, hiddenSizeL1);
-stack{2}.b = sae2OptTheta(2*hiddenSizeL2*hiddenSizeL1+1:2*hiddenSizeL2*hiddenSizeL1+hiddenSizeL2);
-
-% Initialize the parameters for the deep model
-[stackparams, netconfig] = stack2params(stack);
-stackedAETheta = [ saeMlpOptTheta ; stackparams ];
+% % Initialize the stack using the parameters learned
+% stack = cell(1,1);
+% stack{1}.w = reshape(sae1OptTheta(1:hiddenSizeL1*inputSize), ...
+%                      hiddenSizeL1, inputSize);
+% stack{1}.b = sae1OptTheta(2*hiddenSizeL1*inputSize+1:2*hiddenSizeL1*inputSize+hiddenSizeL1);
+% 
+% stack{2}.w = reshape(sae2OptTheta(1:hiddenSizeL2*hiddenSizeL1), ...
+%                      hiddenSizeL2, hiddenSizeL1);
+% stack{2}.b = sae2OptTheta(2*hiddenSizeL2*hiddenSizeL1+1:2*hiddenSizeL2*hiddenSizeL1+hiddenSizeL2);
+% 
+% % Initialize the parameters for the deep model
+% [stackparams, netconfig] = stack2params(stack);
+% stackedAETheta = [ saeMlpOptTheta ; stackparams ];
 
 %% ---------------------- YOUR CODE HERE  ---------------------------------
 %  Instructions: Train the deep network, hidden size here refers to the '
@@ -111,16 +107,16 @@ stackedAETheta = [ saeMlpOptTheta ; stackparams ];
 %                to "hiddenSizeL2".
 %
 %
-DeepOptions.Method = 'lbfgs';
-DeepOptions.display = 'on';
-DeepOptions.maxIter = 250; % aslýnda 100
-t4 = tic;
-[stackedAEOptTheta, cost] = minFunc( @(p) stackedAECost(p, ...
-    inputSize, hiddenSizeL2, outputSize, netconfig, lambda, trainData, yi,perceptronSize), ...
-    stackedAETheta, DeepOptions);
-save stackedAEOptTheta;
-% load stackedAEOptTheta
- pause(5);
+% DeepOptions.Method = 'lbfgs';
+% DeepOptions.display = 'on';
+% DeepOptions.maxIter = 250; % aslýnda 100
+% t4 = tic;
+% [stackedAEOptTheta, cost] = minFunc( @(p) stackedAECost(p, ...
+%     inputSize, hiddenSizeL2, outputSize, netconfig, lambda, train_images, yi,perceptronSize), ...
+%     stackedAETheta, DeepOptions);
+% save stackedAEOptTheta;
+load stackedAEOptTheta
+%  pause(5);
 toc(t4);
 %% STEP 6: Test 
 %  Instructions: You will need to complete the code in stackedAEPredict.m
@@ -129,36 +125,41 @@ toc(t4);
 
 % Get labelled test images
 % Note that we apply the same kind of preprocessing as the training set
-% [testData,testLabels] = get_multipie_data('test');
-% testLabels(testLabels == 0) = 10; % Remap 0 to 10
-load('testData.mat');
-load('validation.mat');
-load('denormalizedImages');
-denormalizedImages=denormalizedImages(:,1901:end);
-
+[testImages,validation,test_pose_labels] = get_raw_test_set();
+load('test_data');
 %% fine tune suz 
-[pred1] = stackedAEPredict(stackedAETheta, inputSize, hiddenSizeL2, ...
-                          outputSize, perceptronSize, netconfig, denormalizedImages);
-save pred1 ;
- pause(5);
-                      
+% [pred1] = stackedAEPredict(stackedAETheta, inputSize, hiddenSizeL2, ...
+%                           outputSize, perceptronSize, netconfig, testImages);
+% save pred1 ;
+% pause(5);
+             
+load('pred1');
 cost_err= 0.5*sumsqr(pred1-validation);% J(w,b) cost
 % acc = mean(testLabels(:) == pred(:));
 fprintf('Before Finetuning Test Accuracy: %0.3f%%\n', cost_err );
 %% fine tunelu
 [pred2] = stackedAEPredict(stackedAEOptTheta, inputSize, hiddenSizeL2, ...
-                          outputSize, perceptronSize, netconfig, denormalizedImages);
+                          outputSize, perceptronSize, netconfig, testImages);
 save pred2 ;
- pause(5);
-
-% for i = 1: size(testData,2)
-%     imshow(reshape(testData(:,i),100,100));
+pause(5);
+load('pred2.mat');
+load('denormalizedTestData.mat')
+% for i = 1: size(testImages,2)
+%     fig = figure;
+%     subplot(1,2,1);
+%     imshow(reshape(denormalizedTestData(i).face,100,100));
 %     hold on;
-%     plot(pred(1:68,i),pred(69:136,i),'r.','MarkerSize',20);
+%     plot(pred2(1:68,i),pred2(69:136,i),'r.','MarkerSize',20);
+%     title('My Predictions')
+%     subplot(1,2,2);
+%     imshow(reshape(denormalizedTestData(i).face,100,100));
+%     hold on;
+%     plot(validation(1:68,i),validation(69:136,i),'r.','MarkerSize',20);
+%     title('Ground Truth')
 %     pause(5);
 %     close all;
 % end
-cost_err= 0.5*sumsqr(pred2-validation);% J(w,b) cost
+% cost_err= 0.5*sumsqr(pred2-validation);% J(w,b) cost
 % acc = mean(testLabels(:) == pred(:));
 fprintf('After Finetuning Test Accuracy: %0.3f%%\n', cost_err );
 

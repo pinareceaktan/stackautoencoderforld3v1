@@ -1,14 +1,10 @@
-function [cost,grad] = mlpCost(theta,inputSize,hiddenSize,outputSize,lambda,data,groundTruth)
+function [cost,grad] = mlpCost(theta,inputSize,outputSize,lambda,data,groundTruth)
 
 %% Unroll The Parameters 
-Theta{1,1} = reshape(theta(1:hiddenSize*inputSize), hiddenSize, inputSize);
-Theta{1,2} = reshape(theta(hiddenSize*inputSize+1:hiddenSize*inputSize+1+hiddenSize*outputSize-1), outputSize, hiddenSize);
-b{1,1} = theta(hiddenSize*inputSize+1+hiddenSize*outputSize:hiddenSize*inputSize+1+hiddenSize*outputSize+hiddenSize-1);
-b{1,2} = theta(hiddenSize*inputSize+1+hiddenSize*outputSize+hiddenSize:end);
-% W1 : 200*10000
-% W2 : 136*200
-% b1 : 200*1
-% b2 : 136*1
+Theta{1,1} = reshape(theta(1:outputSize*inputSize), outputSize, inputSize);
+b{1,1} = theta(theta(outputSize*inputSize+1:end));
+% W1 : 400*136
+% b1 : 136*1
  
 m = size(data,2); % number of train sampes
 nl = 3; % number of layers 
