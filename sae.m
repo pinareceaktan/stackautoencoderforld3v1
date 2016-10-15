@@ -17,10 +17,9 @@ beta            = 3;        % weight of sparsity penalty term
 %% STEP 1: Load train data from three datasets: LFPW,AFW and HELEN
 %% Uncomment if you fetch data set in meanwhile 
 [train_images,yi,pose_labels] = get_raw_data_set('GCNMean0Std1Normalized');
-% load('train_images.mat'); % 2500*4573
-% load('yi.mat');           % 2500*4573     
-disp('eben')
-%% STEP 2: Layer 1 : Train the first sparse autoencoder
+% load('train_images.mat'); % 2500*4868
+% load('yi.mat');           % 2500*4868     
+cfd                             %% STEP 2: Layer 1 : Train the first sparse autoencoder
 %  This trains the first sparse autoencoder on the unlabelled training
 %  images
 %  Randomly initialize the parameters for layer 1 
