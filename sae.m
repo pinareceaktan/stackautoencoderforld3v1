@@ -18,7 +18,7 @@ beta            = 3;        % weight of sparsity penalty term
 [train_images,yi,pose_labels] = get_raw_data_set('GCNMean0Std1Normalized');
 % load('train_images.mat'); % 2500*4868
 % load('yi.mat');           % 2500*4868     
-
+disp('adfa')
 %% STEP 2: Layer 1 : Train the first sparse autoencoder
 %  This trains the first sparse autoencoder on the unlabelled training
 %  images

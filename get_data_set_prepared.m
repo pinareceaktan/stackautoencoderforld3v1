@@ -22,7 +22,7 @@ else
     pose    = input(prompt);
 %     [data_to_be_parsed.pose].'
     indices = find([data_to_be_parsed.pose] == pose(1,1));
-    data_mat = double([data_to_be_parsed(indices).face]);
+    data_mat = [data_to_be_parsed(indices).face];
     landmarks_mat = [data_to_be_parsed(indices).groundtruth];
     labels_mat = [data_to_be_parsed(indices).pose];
 end
