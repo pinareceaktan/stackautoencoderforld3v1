@@ -6,7 +6,7 @@ function [renrmlzd,gs] = gcn(images)
 % Gray scaled 0-255 yo?unluk de?erli matris
 %% Step 1: Local Mean Removal :
 % For each image, subtract the local mean of all pixel values from the image:
-lmr = images-repmat(mean(images),[size(images(:,1)) 1]) ;
+lmr = double(images)-repmat(mean(images),[size(images(:,1)) 1]) ;
 
 %% Step 2: Image Norm Setting
 for j = 1:size(images,2)
