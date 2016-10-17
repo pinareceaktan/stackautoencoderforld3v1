@@ -771,7 +771,7 @@ disp('Train Set is ready !')
 switch how
     case 'mean0std1Normalized' 
         %% mean 0 std 1 normalization
-        pose_part = false;
+        pose_part = true;
         [images,landmark_labels,pose_labels]=get_data_set_prepared(augmented_data,pose_part);
     case 'GCNNormalized'
         pose_part = false;
