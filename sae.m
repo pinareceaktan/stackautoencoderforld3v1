@@ -5,7 +5,6 @@ outputSize      = 68*2;     % 136 coordinates will be extracted
 hiddenSizeL1    = 1600;     % first layer auto encoder extracts 1600 features 
 hiddenSizeL2    = 900;      % second layer auto encoder extracts 900 features
 hiddenSizeL3    = 400;      % third layer auto encoder extracts 400 features
-perceptronSize  = 200;      % perceptron has 200 neurons
  
 sparsityParam   = 0.1;      % desired average activation of the hidden units.
                             % (This was denoted by the Greek alphabet rho, which looks like a lower-case "p",
@@ -19,7 +18,8 @@ beta            = 3;        % weight of sparsity penalty term
 [train_images,yi,pose_labels] = get_raw_data_set('GCNMean0Std1Normalized');
 % load('train_images.mat'); % 2500*4868
 % load('yi.mat');           % 2500*4868     
-cfd                             %% STEP 2: Layer 1 : Train the first sparse autoencoder
+
+%% STEP 2: Layer 1 : Train the first sparse autoencoder
 %  This trains the first sparse autoencoder on the unlabelled training
 %  images
 %  Randomly initialize the parameters for layer 1 
