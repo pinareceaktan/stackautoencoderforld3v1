@@ -637,15 +637,15 @@ load('helenGroundTruthRaw.mat') % load ground-truth matrix
 load('helendata.mat')
 load('helendatadenormalized.mat')
 %% Data Matrix : concatanate them 
-% data                = [lfpwdata,afwdata,helendata];
-% datadenormalized    = [lfpwdatadenormalized afwdatadenormalized helendatadenormalized];
-% load('dataeski.mat'); % poz aç?lar?n? buradan al
-% 
-% for i = 1: size(dataeski,2)
-%     data(i).pose                = dataeski(i).pose;
-%     datadenormalized(i).pose    = dataeski(i).pose;
-% end
-% disp('Most annotations has moved')
+data                = [lfpwdata,afwdata,helendata];
+datadenormalized    = [lfpwdatadenormalized afwdatadenormalized helendatadenormalized];
+load('dataeski.mat'); % poz aç?lar?n? buradan al
+
+for i = 1: size(dataeski,2)
+    data(i).pose                = dataeski(i).pose;
+    datadenormalized(i).pose    = dataeski(i).pose;
+end
+disp('All annotations has coppied')
 %% Pose Classification
 
 % load('data.mat')
@@ -771,19 +771,24 @@ disp('Train Set is ready !')
 switch how
     case 'mean0std1Normalized' 
         %% mean 0 std 1 normalization
-        [images,landmark_labels,pose_labels]=get_data_set_prepared(augmented_data);
+        pose_part = false;
+        [images,landmark_labels,pose_labels]=get_data_set_prepared(augmented_data,pose_part);
     case 'GCNNormalized'
-        [images,landmark_labels,pose_labels]=get_data_set_prepared(augmented_data_denormalized);
+        pose_part = false;
+        [images,landmark_labels,pose_labels]=get_data_set_prepared(augmented_data_denormalized,pose_part);
         %% STP1: Global Contrast Normalization
         [gcnn_images,gcnnmean0std1_images] = gcn(images); 
         clear images
         images = gcnn_images;
     case 'GCNMean0Std1Normalized'
-        [images,landmark_labels,pose_labels]=get_data_set_prepared(augmented_data_denormalized);
+        pose_part = true;
+        [images,landmark_labels,pose_labels]=get_data_set_prepared(augmented_data_denormalized,pose_part);
         %% STP1: Global Contrast Normalization
         [gcnn_images,gcnnmean0std1_images] = gcn(images); 
         clear images
         images = gcnnmean0std1_images;
+        landmark_labels = normalizePic(landmark_labels);
+        
 end
 
 cd(programRoot);
