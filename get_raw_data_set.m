@@ -1098,69 +1098,130 @@ load('helendata.mat')
 % clear indx;
 load('helendatadenormalized.mat')
 
+load('datadenormalized.mat');
 
 %% Data Matrix : concatanate them 
-data                = [lfpwdata,afwdata,helendata];
-datadenormalized    = [lfpwdatadenormalized afwdatadenormalized helendatadenormalized];
+% data                = [lfpwdata,afwdata,helendata];
+% datadenormalized    = [lfpwdatadenormalized afwdatadenormalized helendatadenormalized];
 
-for i = 1: size(datadenormalized,2)
-% test_index = randperm(size(datadenormalized,2),350);
-% for i = 1:size(test_index,2)
-    disp(i);
-    image           = reshape(datadenormalized(i).face,50,50);
-    landmarks68     = reshape(datadenormalized(i).groundtruth,68,2);
-    landmarks66     = landmarks68(1:66,:);
-    [yaw,pitch,roll]= chehra_pose_estimator(image,landmarks66);
-%   disp(['sol-sag : ' num2str(yaw) ', asagi-yukari : ' num2str(pitch)] );
-
-%% Pose Classification Step 1 : Chehra
-% 1 Horizontal Class
-yaw_sign =  sign(yaw);
-yaw_val  =  abs(yaw);
-
-if yaw_val > 8.4
-    switch yaw_sign 
-        case -1
-            horizontal_pose = 1;
-        case 1
-             horizontal_pose = -1;
-    end
-else 
-    horizontal_pose = 0;
-end
-
-% 2 Vertical Class  
-pitch_sign = sign(pitch);
-pitch_val  = abs(pitch);
-if pitch_val >19
-   switch pitch_sign 
-        case -1
-            vertical_pose = 1;
-       case 1
-             vertical_pose = -1;
-   end
-else
-    vertical_pose = 0;
-end
-  
-datadenormalized(i).pose = [horizontal_pose vertical_pose];
-datadenormalized(i).yawpitch = [yaw pitch]; 
-%%  Plot test images: decide parameters
-%     h = figure ;
-%     imshow(image);
-%     hold on
-%     plot(landmarks68(:,1),landmarks68(:,2),'b*');
-%     title([num2str(i),' : Pitch = ',num2str(pitch),' ; Yaw = ',num2str(yaw)]);
-%     set(gcf,'units','normalized','outerposition',[0 0 1 1]);
-%     saveas(h,char(strcat('resultsPoseEstimation','/posetest_',num2str(i), '.jpg')));
-%     pause(0.1);
-%     close all;
-%     clear image landmarks68 landmarks66
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-end
-disp('done');
+% for i = 1: size(datadenormalized,2)
+% % test_index = randperm(size(datadenormalized,2),350);
+% % for i = 1:size(test_index,2)
+%     disp(i);
+%     image           = reshape(datadenormalized(i).face,50,50);
+%     landmarks68     = reshape(datadenormalized(i).groundtruth,68,2);
+%     landmarks66     = landmarks68(1:66,:);
+%     [yaw,pitch,roll]= chehra_pose_estimator(image,landmarks66);
+% %   disp(['sol-sag : ' num2str(yaw) ', asagi-yukari : ' num2str(pitch)] );
+% 
+% %% Pose Classification Step 1 : Chehra
+% % 1 Horizontal Class
+% yaw_sign =  sign(yaw);
+% yaw_val  =  abs(yaw);
+% 
+% if yaw_val > 8.4
+%     switch yaw_sign 
+%         case -1
+%             horizontal_pose = 1;
+%         case 1
+%              horizontal_pose = -1;
+%     end
+% else 
+%     horizontal_pose = 0;
+% end
+% 
+% % 2 Vertical Class  
+% pitch_sign = sign(pitch);
+% pitch_val  = abs(pitch);
+% if pitch_val >19
+%    switch pitch_sign 
+%         case -1
+%             vertical_pose = 1;
+%        case 1
+%              vertical_pose = -1;
+%    end
+% else
+%     vertical_pose = 0;
+% end
+%   
+% datadenormalized(i).pose = [horizontal_pose vertical_pose];
+% datadenormalized(i).yawpitch = [yaw pitch]; 
+% %%  Plot test images: decide parameters
+% %     h = figure ;
+% %     imshow(image);
+% %     hold on
+% %     plot(landmarks68(:,1),landmarks68(:,2),'b*');
+% %     title([num2str(i),' : Pitch = ',num2str(pitch),' ; Yaw = ',num2str(yaw)]);
+% %     set(gcf,'units','normalized','outerposition',[0 0 1 1]);
+% %     saveas(h,char(strcat('resultsPoseEstimation','/posetest_',num2str(i), '.jpg')));
+% %     pause(0.1);
+% %     close all;
+% %     clear image landmarks68 landmarks66
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+% end
+% disp('done');
 %% Pose Classification Step 2 : Manuel
+
+for i = 1: 12:size(datadenormalized,2)
+        % test_index = randperm(size(datadenormalized,2),350);
+        % for i = [2293,6035,7812,8988,11569,21864,23041,24288,25416,33864,34861,36541]
+        % 	checkpose = datadenormalized(i).pose ;
+        %     if  ~isnumeric(checkpose(1)) ||  ~isnumeric(checkpose(2))
+
+    disp(i);
+    image   = reshape(datadenormalized(i).face,50,50);
+   
+    imshow(image);
+    yawpitch = datadenormalized(i).yawpitch;
+%     disp(['yaw: ' num2str(yawpitch(1)) ',pitch: ' num2str(yawpitch(2))] );
+%     disp(['yaw class: ' num2str(datadenormalized(i).pose(1))]);
+    prompt=('What is yaw class?');
+    yaw_class = input(prompt,'s');
+    switch yaw_class
+        case 'k'
+            yaw_class = 1;
+        case 'þ'
+            yaw_class = -1;
+        case 'l'
+            yaw_class = 0;
+    end
+    
+%     disp(['pitch class: ' num2str(datadenormalized(i).pose(2))]);
+    prompt = ('What is pitch class?');
+    pitch_class = input(prompt,'s');
+    switch pitch_class
+        case 'o'
+            pitch_class = -1;
+        case 'ç'
+            pitch_class = 1;
+        case 'l'
+            pitch_class = 0;
+    end
+    
+    datadenormalized(i+1).pose = [yaw_class pitch_class];
+    datadenormalized(i+2).pose = [yaw_class pitch_class];
+    datadenormalized(i+3).pose = [yaw_class pitch_class];
+    datadenormalized(i+4).pose = [yaw_class pitch_class];
+    datadenormalized(i+5).pose = [yaw_class pitch_class];
+    datadenormalized(i+6).pose = [yaw_class pitch_class];
+    datadenormalized(i+7).pose = [yaw_class pitch_class];
+    datadenormalized(i+8).pose = [yaw_class pitch_class];
+    datadenormalized(i+9).pose = [yaw_class pitch_class];
+    datadenormalized(i+10).pose = [yaw_class pitch_class];
+    datadenormalized(i+11).pose = [-1*yaw_class pitch_class];
+%     end
+end
+
+%%
+
+
+
+
+
+disp('hasss')
+
+
 
 % load('data.mat')
 % load('datadenormalized');
