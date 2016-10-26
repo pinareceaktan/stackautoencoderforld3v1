@@ -1,4 +1,4 @@
-function [images,landmark_labels,pose_labels] = get_raw_data_set(how)
+function [images,landmark_labels,pose_labels] = get_raw_data_set(how,pose_partition)
 %% This function gets three dataset and returns normalized or denormalized
 % image arrays.
 %% Train Dataset
@@ -1098,8 +1098,7 @@ load('helendata.mat')
 % clear indx;
 load('helendatadenormalized.mat')
 
-load('datadenormalized.mat');
-
+% load('datadenormalized.mat');
 %% Data Matrix : concatanate them 
 % data                = [lfpwdata,afwdata,helendata];
 % datadenormalized    = [lfpwdatadenormalized afwdatadenormalized helendatadenormalized];
@@ -1114,7 +1113,8 @@ load('datadenormalized.mat');
 %     [yaw,pitch,roll]= chehra_pose_estimator(image,landmarks66);
 % %   disp(['sol-sag : ' num2str(yaw) ', asagi-yukari : ' num2str(pitch)] );
 % 
-% %% Pose Classification Step 1 : Chehra
+
+%% Pose Classification Step 1 : Chehra
 % % 1 Horizontal Class
 % yaw_sign =  sign(yaw);
 % yaw_val  =  abs(yaw);
@@ -1161,202 +1161,81 @@ load('datadenormalized.mat');
 % 
 % end
 % disp('done');
+
 %% Pose Classification Step 2 : Manuel
 
-for i = 1: 12:size(datadenormalized,2)
-        % test_index = randperm(size(datadenormalized,2),350);
-        % for i = [2293,6035,7812,8988,11569,21864,23041,24288,25416,33864,34861,36541]
-        % 	checkpose = datadenormalized(i).pose ;
-        %     if  ~isnumeric(checkpose(1)) ||  ~isnumeric(checkpose(2))
-
-    disp(i);
-    image   = reshape(datadenormalized(i).face,50,50);
-   
-    imshow(image);
-    yawpitch = datadenormalized(i).yawpitch;
-%     disp(['yaw: ' num2str(yawpitch(1)) ',pitch: ' num2str(yawpitch(2))] );
-%     disp(['yaw class: ' num2str(datadenormalized(i).pose(1))]);
-    prompt=('What is yaw class?');
-    yaw_class = input(prompt,'s');
-    switch yaw_class
-        case 'k'
-            yaw_class = 1;
-        case 'þ'
-            yaw_class = -1;
-        case 'l'
-            yaw_class = 0;
-    end
-    
-%     disp(['pitch class: ' num2str(datadenormalized(i).pose(2))]);
-    prompt = ('What is pitch class?');
-    pitch_class = input(prompt,'s');
-    switch pitch_class
-        case 'o'
-            pitch_class = -1;
-        case 'ç'
-            pitch_class = 1;
-        case 'l'
-            pitch_class = 0;
-    end
-    
-    datadenormalized(i+1).pose = [yaw_class pitch_class];
-    datadenormalized(i+2).pose = [yaw_class pitch_class];
-    datadenormalized(i+3).pose = [yaw_class pitch_class];
-    datadenormalized(i+4).pose = [yaw_class pitch_class];
-    datadenormalized(i+5).pose = [yaw_class pitch_class];
-    datadenormalized(i+6).pose = [yaw_class pitch_class];
-    datadenormalized(i+7).pose = [yaw_class pitch_class];
-    datadenormalized(i+8).pose = [yaw_class pitch_class];
-    datadenormalized(i+9).pose = [yaw_class pitch_class];
-    datadenormalized(i+10).pose = [yaw_class pitch_class];
-    datadenormalized(i+11).pose = [-1*yaw_class pitch_class];
-%     end
-end
-
-%%
-
-
-
-
-
-disp('hasss')
-
-
-
-% load('data.mat')
-% load('datadenormalized');
-% for i = 1 : size(data,2)
+% for i = 1: 12:size(datadenormalized,2)
+%         % test_index = randperm(size(datadenormalized,2),350);
+%         % for i = [2293,6035,7812,8988,11569,21864,23041,24288,25416,33864,34861,36541]
+%         % 	checkpose = datadenormalized(i).pose ;
+%         %     if  ~isnumeric(checkpose(1)) ||  ~isnumeric(checkpose(2))
 % 
 %     disp(i);
-%     points = reshape(datadenormalized(i).groundtruth,68,2);
-%     imshow(reshape(datadenormalized(i).face,50,50));
-%     hold on
-%     plot(points(:,1),points(:,2),'g.','MarkerSize',10);    
-%     lef_distance = points(30,1)-points(4,1);
-%     right_distance = points(14,1)-points(30,1);
-%     dist = lef_distance-right_distance;
-%     if abs(dist)>8.5
-%     switch sign(dist)
-%         case -1
-%             data(i).pose = 1; 
-%             datadenormalized(i).pose = 1;
-%         case +1
-%             data(i).pose = 3; 
-%             datadenormalized(i).pose = 3;
+%     image   = reshape(datadenormalized(i).face,50,50);
+%    
+%     imshow(image);
+%     yawpitch = datadenormalized(i).yawpitch;
+% %     disp(['yaw: ' num2str(yawpitch(1)) ',pitch: ' num2str(yawpitch(2))] );
+% %     disp(['yaw class: ' num2str(datadenormalized(i).pose(1))]);
+%     prompt=('What is yaw class?');
+%     yaw_class = input(prompt,'s');
+%     switch yaw_class
+%         case 'k'
+%             yaw_class = 1;
+%         case 'þ'
+%             yaw_class = -1;
+%         case 'l'
+%             yaw_class = 0;
 %     end
-%     else
-%        data(i).pose = 2; 
-%        datadenormalized(i).pose = 2;
+%     
+% %     disp(['pitch class: ' num2str(datadenormalized(i).pose(2))]);
+%     prompt = ('What is pitch class?');
+%     pitch_class = input(prompt,'s');
+%     switch pitch_class
+%         case 'o'
+%             pitch_class = -1;
+%         case 'ç'
+%             pitch_class = 1;
+%         case 'l'
+%             pitch_class = 0;
 %     end
-%     clear lndmrks lef_distance right_distance dist
+%     
+%     datadenormalized(i+1).pose = [yaw_class pitch_class];
+%     datadenormalized(i+2).pose = [yaw_class pitch_class];
+%     datadenormalized(i+3).pose = [yaw_class pitch_class];
+%     datadenormalized(i+4).pose = [yaw_class pitch_class];
+%     datadenormalized(i+5).pose = [yaw_class pitch_class];
+%     datadenormalized(i+6).pose = [yaw_class pitch_class];
+%     datadenormalized(i+7).pose = [yaw_class pitch_class];
+%     datadenormalized(i+8).pose = [yaw_class pitch_class];
+%     datadenormalized(i+9).pose = [yaw_class pitch_class];
+%     datadenormalized(i+10).pose = [yaw_class pitch_class];
+%     datadenormalized(i+11).pose = [-1*yaw_class pitch_class];
+% %     end
 % end
-% disp('end');
-%% comparision to manuel results : Create errata
-% load('data_100100.mat')
-% load('data.mat')
 
-% counter = 1;
-% for i = 1: size(data,2)
-%     if data(i).pose ~= data_100100(i).pose
-%         errata(counter) = i;
-%         counter = counter+1;
-%     end
-% end
-% disp('errata is ready')
-% 
-% load('errata.mat');
-% for i = errata
-%     if data(i).pose ~= data_100100(i).pose
-%         imshow(reshape(data(i).face,50,50))
-%         disp(i)
-%         disp(['Manuel class : ' num2str(data_100100(i).pose)]);
-%         disp(['Automatized class : ' num2str(data(i).pose)]);
-%               prompt = 'What is your last decision ? ';
-%               pose_r = input(prompt);
-%              
-%               data(i).pose = pose_r;
-%                
-%     end
-%     close all
-% end
-% for i = 1 : size(data,2)
-% datadenormalized(i).pose = data(i).pose;
-% end
-% disp('Poses has came');
-%% Translate them : Augment train data
 
-% load('datadenormalized.mat')
-% load('data.mat')
-% 
-% counter = 1;
-% for i = 1: size(data,2)
-%     try
-%     if data(i).pose ~= 2
-%         image                               = reshape(datadenormalized(i).face,50,50);
-%         tform                               = affine2d([-1 0 0; 0 1 0; 0 0 1]);
-%         translatedIm                        = imwarp(image,tform);
-%         % Augment the Image
-%         surplussedDataDnrmlzd(counter).face  = reshape(translatedIm,imsize,1);
-%         surplossedData(counter).face         = reshape(normalizePic(im2double(translatedIm)),imsize,1);
-%         gt = reshape(datadenormalized(i).groundtruth,68,2);
-%         % Augment the Groundtruth
-%         surplussedDataDnrmlzd(counter).groundtruth = reshape(horzcat(50-gt(:,1),gt(:,2)),classsize,1);
-%         surplossedData(counter).groundtruth        = reshape(normalizePic(horzcat(100-gt(:,1),gt(:,2))),classsize,1);
-%         switch data(i).pose
-%             case 1
-%                 surplossedData(counter).pose = 3;
-%                 surplussedDataDnrmlzd(counter).pose = 3;
-%             case 3
-%                 surplossedData(counter).pose = 1;
-%                 surplussedDataDnrmlzd(counter).pose = 1;
-%          end
-%           
-%         fig = figure ;
-%         subplot(1,2,1)
-%         imshow(image)
-%         hold on
-%         plot(gt(:,1),gt(:,2),'g.','MarkerSize',10);
-%         title('Original')
-%         subplot(1,2,2)
-%         imshow(translatedIm)
-%         hold on
-%         tgt = reshape(surplussedDataDnrmlzd(counter).groundtruth,68,2);
-%         plot(tgt(:,1),tgt(:,2),'g.','MarkerSize',10);
-%         title('Translated Image')
-%         pause(0.1);
-%         saveas(fig,char(strcat('results_translation/',num2str(counter),'.png')));
-%         close all
-%         counter = counter+1;
-%     end
-%    catch ME
-%        fileID = fopen('logfile_translation.txt','a');
-%        fprintf(fileID,'%20s %40s %3d\n',char(strcat(file_num,'_',subject_num,'.jpg')),(ME.identifier),(ME.stack.line));
-%        fclose(fileID);
-%        continue;
-%    end
-% end
-% 
-% augmented_data               = [data,surplossedData];
-% augmented_data_denormalized  = [datadenormalized,surplussedDataDnrmlzd];
 
-load('augmented_data.mat');
-load('augmented_data_denormalized.mat');
+load('datadenormalized.mat')
+
+augmented_data_denormalized = datadenormalized;
+
 disp('Train Set is ready !')
 
 switch how
-    case 'mean0std1Normalized' 
-        %% mean 0 std 1 normalization
-        pose_part = true;
-        [images,landmark_labels,pose_labels]=get_data_set_prepared(augmented_data,pose_part);
+%     case 'mean0std1Normalized' 
+%         %% mean 0 std 1 normalization
+%         pose_part = pose_partition;
+%         [images,landmark_labels,pose_labels]=get_data_set_prepared(augmented_data,pose_part);
     case 'GCNNormalized'
-        pose_part = false;
+        pose_part = pose_partition;
         [images,landmark_labels,pose_labels]=get_data_set_prepared(augmented_data_denormalized,pose_part);
         %% STP1: Global Contrast Normalization
         [gcnn_images,gcnnmean0std1_images] = gcn(images); 
         clear images
         images = gcnn_images;
     case 'GCNMean0Std1Normalized'
-        pose_part = true;
+        pose_part = pose_partition;
         [images,landmark_labels,pose_labels]=get_data_set_prepared(augmented_data_denormalized,pose_part);
         %% STP1: Global Contrast Normalization
         [gcnn_images,gcnnmean0std1_images] = gcn(images); 
