@@ -4,17 +4,18 @@ landmarksize = 68*2;
 samplesize   = size(data_to_be_parsed,2);
 data_mat = zeros(imsize,samplesize);
 landmarks_mat  = zeros(landmarksize,samplesize);
-labels_mat     = zeros(1,samplesize);
+labels_mat     = zeros(samplesize,2);
 if ~pose_partition
 for i = 1:size(data_to_be_parsed,2)
     try
     data_mat(:,i) = data_to_be_parsed(i).face;
     landmarks_mat(:,i)  = data_to_be_parsed(i).groundtruth;
-    labels_mat(:,i) = data_to_be_parsed(i).pose;
-%     labels_mat(:,i)     = data(i).pose;
+    labels_mat(i,:) = data_to_be_parsed(i).pose;
     catch ME
         disp(i);
         disp(ME.identifier);
+        prompt = 'screwed';
+        input(prompt);
     end
 end
 else
