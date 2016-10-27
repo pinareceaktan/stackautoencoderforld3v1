@@ -1,7 +1,7 @@
 %%  Stacked Autoencoder implementation based on the courses of NG in CS294A/CS294W
 %% STEP 0: Parameter initialization
 inputSize       = 50 * 50;% image size
-outputSize      = 68*2;     % 136 coordinates will be extracted
+outputSize      = 68*2+2;     % 136 coordinates will be extracted
 hiddenSizeL1    = 1600;     % first layer auto encoder extracts 1600 features 
 hiddenSizeL2    = 900;      % second layer auto encoder extracts 900 features
 hiddenSizeL3    = 400;      % third layer auto encoder extracts 400 features
@@ -15,10 +15,12 @@ beta            = 3;        % weight of sparsity penalty term
 
 %% STEP 1: Load train data from three datasets: LFPW,AFW and HELEN
 %% Uncomment if you fetch data set in meanwhile 
-[train_images,yi,pose_labels] = get_raw_data_set('mean0std1Normalized');
-% load('train_images.mat'); % 2500*4868
-% load('yi.mat');           % 2500*4868     
-disp('adfa')
+[train_images,yi,pose_labels] = get_raw_data_set('GCNMean0Std1Normalized',0);
+smap = vertcat(yi,pose_labels');
+
+% load('train_images.mat'); % 2500*37766
+% load('yi.mat');           % 138*37766     
+
 %% STEP 2: Layer 1 : Train the first sparse autoencoder
 %  This trains the first sparse autoencoder on the unlabelled training
 %  images
@@ -35,8 +37,9 @@ t1 = tic;
     p, inputSize, hiddenSizeL1, lambda, sparsityParam, beta, train_images), ...
     sae1Theta, options);
 disp('Layer 1 : Thetas calculated');
-% load('sae1OptTheta.mat');
+save 'sae1OptTheta.mat' sae1OptTheta;
 toc(t1);
+pause(4);
 % -------------------------------------------------------------------------
 %%======================================================================
 %% STEP 2: Feed Forward First Layer
@@ -47,8 +50,8 @@ toc(t1);
                                         inputSize, train_images);
 disp('Layer 1 : Features calculated');
 
-% save sae1Features;
-% load('sae1Features.mat')
+save 'sae1Features.mat' sae1Features;
+pause(4);
 
 %% STEP 3 :  Layer 2 : Train the second sparse autoencoder
 sae2Theta = initializeParameters(hiddenSizeL2, hiddenSizeL1);
@@ -58,16 +61,16 @@ t2 = tic;
     sae2Theta, options);
 toc(t2);
 disp('Layer 2 : Thetas calculated');
-% save sae2OptTheta;
-%% STEP 3: Feed Forward Second Layer
+pause(4);
+save 'sae2OptTheta.mat' sae2OptTheta;
+%% STEP 4: Feed Forward Second Layer
 
 [sae2Features] = feedForwardAutoencoder(sae2OptTheta, hiddenSizeL2, ...
                                         hiddenSizeL1, sae1Features);
 save sae2Features;
 disp('Layer 2 is done');
-load sae2Features;
-%  pause(5);
-%% STEP 4 : Train a multilayer perceptron
+pause(4);
+%% STEP 5 : Train a multilayer perceptron
 t3 = tic;
 perceptronTheta = initializePerceptronParams(outputSize,hiddenSizeL3);
 perceptronOptions.Method = 'lbfgs';
@@ -76,12 +79,14 @@ perceptronOptions.maxIter = 400;
 [saeMlpOptTheta, cost] = minFunc(@(p) mlpCost(...
     p, hiddenSizeL2,perceptronSize,outputSize,lambda,sae2Features,yi), ...
     perceptronTheta, perceptronOptions);
-% load('saeMlpOptTheta.mat');
 toc(t3);
+
+save 'saeMlpOptTheta.mat' saeMlpOptTheta;
+
+
 disp('Perceptron has trained ');
-% save saeMlpOptTheta;
-load saeMlpOptTheta;
- pause(5);
+
+pause(5);
 %% STEP 5: Finetune 
 
 % Implement the stackedAECost to give the combined cost of the whole model
