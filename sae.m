@@ -14,62 +14,78 @@ beta            = 3;        % weight of sparsity penalty term
 
 
 %% STEP 1: Load train data from three datasets: LFPW,AFW and HELEN
-%% Uncomment if you fetch data set in meanwhile 
+% Uncomment if you fetch data set in meanwhile 
 [train_images,yi,pose_labels] = get_raw_data_set('GCNMean0Std1Normalized',0);
 smap = vertcat(yi,pose_labels');
 
 % load('train_images.mat'); % 2500*37766
 % load('yi.mat');           % 138*37766     
 
-%% STEP 2: Layer 1 : Train the first sparse autoencoder
-%  This trains the first sparse autoencoder on the unlabelled training
-%  images
-%  Randomly initialize the parameters for layer 1 
+%% STEP 2.a: Layer 1 : Train the first sparse autoencoder 2500 * 1600
 
 addpath minFunc/
 options.Method = 'lbfgs'; % optimization algorithm
-options.maxIter = 500; % Maximum number of iterations of L-BFGS to run aslýnda 400
+options.maxIter = 500;    % Maximum number of iterations of L-BFGS to run aslýnda 400
 options.display = 'on';
-%% Uncomment if you extract features meanwhile 
+% Uncomment if you extract features meanwhile 
 sae1Theta = initializeParameters(hiddenSizeL1, inputSize);
 t1 = tic;
 [sae1OptTheta, cost] = minFunc(@(p) sparseAutoencoderCost(...
     p, inputSize, hiddenSizeL1, lambda, sparsityParam, beta, train_images), ...
     sae1Theta, options);
-disp('Layer 1 : Thetas calculated');
+disp('Layer 1 : Theta calculated');
 save 'sae1OptTheta.mat' sae1OptTheta;
 toc(t1);
 pause(4);
-% -------------------------------------------------------------------------
-%%======================================================================
-%% STEP 2: Feed Forward First Layer
-%  This trains the second sparse autoencoder on the first autoencoder
-%  featurs.
-%% Uncomment if you are extracting sea1features in meanwhile
+
+%% STEP 2.b: Feed Forward First Layer
+% Uncomment if you are extracting sea1features in meanwhile
 [sae1Features] = feedForwardAutoencoder(sae1OptTheta, hiddenSizeL1, ...
                                         inputSize, train_images);
 disp('Layer 1 : Features calculated');
-
-save 'sae1Features.mat' sae1Features;
 pause(4);
+save 'sae1Features.mat' sae1Features;
 
-%% STEP 3 :  Layer 2 : Train the second sparse autoencoder
+%% STEP 3.a :  Layer 2 : Train the second sparse autoencoder : 1600*900
 sae2Theta = initializeParameters(hiddenSizeL2, hiddenSizeL1);
 t2 = tic;
 [sae2OptTheta, cost] = minFunc(@(p) sparseAutoencoderCost(...
     p, hiddenSizeL1, hiddenSizeL2, lambda, sparsityParam, beta, sae1Features), ...
     sae2Theta, options);
 toc(t2);
+
 disp('Layer 2 : Thetas calculated');
 pause(4);
 save 'sae2OptTheta.mat' sae2OptTheta;
-%% STEP 4: Feed Forward Second Layer
+
+%% STEP 3.b: Feed Forward Second Layer
 
 [sae2Features] = feedForwardAutoencoder(sae2OptTheta, hiddenSizeL2, ...
                                         hiddenSizeL1, sae1Features);
-save sae2Features;
-disp('Layer 2 is done');
+disp('Layer 2 : Features calculated');
 pause(4);
+save sae2Features;
+
+%% STEP 4.a :  Layer 3 : Train the second sparse autoencoder : 900*400
+sae3Theta = initializeParameters(hiddenSizeL3, hiddenSizeL2);
+t2 = tic;
+[sae3OptTheta, cost] = minFunc(@(p) sparseAutoencoderCost(...
+    p, hiddenSizeL1, hiddenSizeL2, lambda, sparsityParam, beta, sae2Features), ...
+    sae3Theta, options);
+toc(t2);
+
+disp('Layer 3 : Thetas calculated');
+pause(4);
+save 'sae3OptTheta.mat' sae3OptTheta;
+
+%% STEP 4.b: Feed Forward Second Layer
+
+[sae3Features] = feedForwardAutoencoder(sae3OptTheta, hiddenSizeL3, ...
+                                        hiddenSizeL2, sae2Features);
+save sae2Features;
+disp('Layer 3 : Features calculated');
+pause(4);
+
 %% STEP 5 : Train a multilayer perceptron
 t3 = tic;
 perceptronTheta = initializePerceptronParams(outputSize,hiddenSizeL3);
