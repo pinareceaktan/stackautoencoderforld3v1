@@ -1220,7 +1220,7 @@ load('datadenormalized.mat')
 
 augmented_data_denormalized = datadenormalized;
 
-disp('Train Set is ready !')
+disp('Augmentation is done!')
 
 switch how
 %     case 'mean0std1Normalized' 
@@ -1244,5 +1244,5 @@ switch how
         landmark_labels = normalizePic(landmark_labels);
         
 end
-
+disp('Train set is READY !');
 cd(programRoot);
