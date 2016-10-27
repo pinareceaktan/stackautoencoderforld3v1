@@ -14,13 +14,13 @@ sos = sumsqr(lmr(:,j)); % sum of squares
 srosos = sqrt(sos);% square root of
 ins(:,j) = lmr(:,j)*100/srosos;
 end
-
+mean_ind = 1:12:size(ins,2);
 %% Step 3 : Global Mean Removal
-global_mean = mean(ins,2); % find the global mean of each pixel in dataset
+global_mean = mean(ins(:,mean_ind),2); % find the global mean of each pixel in dataset
 gmr = ins-repmat(global_mean,[1 size(images,2) ]);
 
 %% Step 4 : Global Standardisation : Mean 0, std 1 Normalization
-global_std  = (std(gmr'))';
+global_std  = (std(gmr(:,mean_ind)'))';
 gs = gmr./repmat(global_std,[1 size(images,2) ]);
 
 %% Step 5 : Re-Normalize Images scaled between 0-255
