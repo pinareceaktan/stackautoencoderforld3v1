@@ -15,7 +15,7 @@ beta            = 3;        % weight of sparsity penalty term
 
 %% STEP 1: Load train data from three datasets: LFPW,AFW and HELEN
 % Uncomment if you fetch data set in meanwhile 
-[train_images,yi,pose_labels] = get_raw_data_set('GCNMean0Std1Normalized',0);
+[train_images,yi,pose_labels] = get_raw_data_set('classicalNormalization',0);
 smap = vertcat(yi,pose_labels');
 
 % load('train_images.mat'); % 2500*37766
