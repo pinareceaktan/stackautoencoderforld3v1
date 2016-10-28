@@ -2,7 +2,7 @@ function [cost,grad] = mlpCost(theta,inputSize,outputSize,lambda,data,groundTrut
 
 %% Unroll The Parameters 
 Theta{1,1} = reshape(theta(1:outputSize*inputSize), outputSize, inputSize);
-b{1,1} = theta(theta(outputSize*inputSize+1:end));
+b{1,1} = theta(outputSize*inputSize+1:end);
 % W1 : 400*136
 % b1 : 136*1
  
