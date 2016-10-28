@@ -7,7 +7,7 @@ b{1,1} = theta(outputSize*inputSize+1:end);
 % b1 : 136*1
  
 m = size(data,2); % number of train sampes
-nl = 2; % number of layers 
+nl = 3; % number of layers 
 %% Forward Propagation
 a(1) = {data};
 for i = 2: nl % loop through hidden layers
