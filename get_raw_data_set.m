@@ -1234,6 +1234,7 @@ switch how
         [gcnn_images,gcnnmean0std1_images] = gcn(images); 
         clear images
         images = gcnn_images;
+        
     case 'GCNMean0Std1Normalized'
         pose_part = pose_partition;
         [images,landmark_labels,pose_labels]=get_data_set_prepared(augmented_data_denormalized,pose_part);
@@ -1242,7 +1243,19 @@ switch how
         clear images
         images = gcnnmean0std1_images;
         landmark_labels = normalizePic(landmark_labels);
-        
+    case 'GCNZeroOneNormalization'
+        pose_part = pose_partition;
+        [images,landmark_labels,pose_labels]=get_data_set_prepared(augmented_data_denormalized,pose_part);
+        %% STP1: Global Contrast Normalization
+        [gcnn_images,gcnnmean0std1_images] = gcn(images); 
+        clear images
+        images = zero_one_normalization(gcnn_images);
+        landmark_labels = zero_one_normalization(landmark_labels);
+    case 'classicalNormalization'
+         pose_part = pose_partition;
+        [images,landmark_labels,pose_labels]=get_data_set_prepared(augmented_data_denormalized,pose_part);
+        images = zero_one_normalization(images);
+        landmark_labels = zero_one_normalization(landmark_labels);
 end
 disp('Train set is READY !');
 cd(programRoot);
