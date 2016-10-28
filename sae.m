@@ -70,6 +70,7 @@ load('sae2OptTheta');
 % disp('Layer 2 : Features calculated');
 % pause(4);
 % save sae2Features;
+load('sae2Features.mat');
 
 %% STEP 4.a :  Layer 3 : Train the third sparse autoencoder : 900*400
 % sae3Theta = initializeParameters(hiddenSizeL3, hiddenSizeL2);
@@ -85,9 +86,9 @@ disp('Layer 3 : Thetas calculated');
 load('sae3OptTheta.mat');
 %% STEP 4.b: Feed Forward Third Layer
 
-% [sae3Features] = feedForwardAutoencoder(sae3OptTheta, hiddenSizeL3, ...
-%                                         hiddenSizeL2, sae2Features);
-% save sae2Features;
+[sae3Features] = feedForwardAutoencoder(sae3OptTheta, hiddenSizeL3, ...
+                                        hiddenSizeL2, sae2Features);
+save sae3Features;
 % disp('Layer 3 : Features calculated');
 % pause(4);
 
