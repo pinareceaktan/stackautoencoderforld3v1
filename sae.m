@@ -47,8 +47,11 @@ pause(4);
 save 'sae1Features.mat' sae1Features;
 
 %% STEP 3.a :  Layer 2 : Train the second sparse autoencoder : 1600*900
+
 sae2Theta = initializeParameters(hiddenSizeL2, hiddenSizeL1);
+
 t2 = tic;
+
 [sae2OptTheta, cost] = minFunc(@(p) sparseAutoencoderCost(...
     p, hiddenSizeL1, hiddenSizeL2, lambda, sparsityParam, beta, sae1Features), ...
     sae2Theta, options);
@@ -66,11 +69,11 @@ disp('Layer 2 : Features calculated');
 pause(4);
 save sae2Features;
 
-%% STEP 4.a :  Layer 3 : Train the second sparse autoencoder : 900*400
+%% STEP 4.a :  Layer 3 : Train the third sparse autoencoder : 900*400
 sae3Theta = initializeParameters(hiddenSizeL3, hiddenSizeL2);
 t2 = tic;
 [sae3OptTheta, cost] = minFunc(@(p) sparseAutoencoderCost(...
-    p, hiddenSizeL1, hiddenSizeL2, lambda, sparsityParam, beta, sae2Features), ...
+    p, hiddenSizeL2, hiddenSizeL3, lambda, sparsityParam, beta, sae2Features), ...
     sae3Theta, options);
 toc(t2);
 
@@ -78,7 +81,7 @@ disp('Layer 3 : Thetas calculated');
 pause(4);
 save 'sae3OptTheta.mat' sae3OptTheta;
 
-%% STEP 4.b: Feed Forward Second Layer
+%% STEP 4.b: Feed Forward Third Layer
 
 [sae3Features] = feedForwardAutoencoder(sae3OptTheta, hiddenSizeL3, ...
                                         hiddenSizeL2, sae2Features);
@@ -93,7 +96,7 @@ perceptronOptions.Method = 'lbfgs';
 perceptronOptions.display = 'on';
 perceptronOptions.maxIter = 400; 
 [saeMlpOptTheta, cost] = minFunc(@(p) mlpCost(...
-    p, hiddenSizeL2,perceptronSize,outputSize,lambda,sae2Features,yi), ...
+    p, hiddenSizeL3,outputSize,lambda,sae3Features,yi), ...
     perceptronTheta, perceptronOptions);
 toc(t3);
 
@@ -108,19 +111,22 @@ pause(5);
 % Implement the stackedAECost to give the combined cost of the whole model
 % then run this cell.
 
-% % Initialize the stack using the parameters learned
-% stack = cell(1,1);
-% stack{1}.w = reshape(sae1OptTheta(1:hiddenSizeL1*inputSize), ...
-%                      hiddenSizeL1, inputSize);
-% stack{1}.b = sae1OptTheta(2*hiddenSizeL1*inputSize+1:2*hiddenSizeL1*inputSize+hiddenSizeL1);
-% 
-% stack{2}.w = reshape(sae2OptTheta(1:hiddenSizeL2*hiddenSizeL1), ...
-%                      hiddenSizeL2, hiddenSizeL1);
-% stack{2}.b = sae2OptTheta(2*hiddenSizeL2*hiddenSizeL1+1:2*hiddenSizeL2*hiddenSizeL1+hiddenSizeL2);
-% 
-% % Initialize the parameters for the deep model
-% [stackparams, netconfig] = stack2params(stack);
-% stackedAETheta = [ saeMlpOptTheta ; stackparams ];
+% Initialize the stack using the parameters learned
+stack = cell(1,1);
+stack{1}.w = reshape(sae1OptTheta(1:hiddenSizeL1*inputSize), ...
+                     hiddenSizeL1, inputSize);
+stack{1}.b = sae1OptTheta(2*hiddenSizeL1*inputSize+1:2*hiddenSizeL1*inputSize+hiddenSizeL1);
+
+stack{2}.w = reshape(sae2OptTheta(1:hiddenSizeL2*hiddenSizeL1), ...
+                     hiddenSizeL2, hiddenSizeL1);
+stack{2}.b = sae2OptTheta(2*hiddenSizeL2*hiddenSizeL1+1:2*hiddenSizeL2*hiddenSizeL1+hiddenSizeL2);
+
+stack{3}.w = reshape(sae3OptTheta(1:hiddenSizeL3*hiddenSizeL2), ...
+                     hiddenSizeL3, hiddenSizeL2);
+stack{3}.b = sae2OptTheta(2*hiddenSizeL3*hiddenSizeL2+1:2*hiddenSizeL3*hiddenSizeL2+hiddenSizeL3);
+% Initialize the parameters for the deep model
+[stackparams, netconfig] = stack2params(stack);
+stackedAETheta = [ saeMlpOptTheta ; stackparams ];
 
 %% ---------------------- YOUR CODE HERE  ---------------------------------
 %  Instructions: Train the deep network, hidden size here refers to the '
@@ -128,21 +134,18 @@ pause(5);
 %                to "hiddenSizeL2".
 %
 %
-% DeepOptions.Method = 'lbfgs';
-% DeepOptions.display = 'on';
-% DeepOptions.maxIter = 250; % aslýnda 100
-% t4 = tic;
-% [stackedAEOptTheta, cost] = minFunc( @(p) stackedAECost(p, ...
-%     inputSize, hiddenSizeL2, outputSize, netconfig, lambda, train_images, yi,perceptronSize), ...
-%     stackedAETheta, DeepOptions);
-% save stackedAEOptTheta;
-load stackedAEOptTheta
-%  pause(5);
+DeepOptions.Method = 'lbfgs';
+DeepOptions.display = 'on';
+DeepOptions.maxIter = 250; % aslýnda 100
+t4 = tic;
+[stackedAEOptTheta, cost] = minFunc( @(p) stackedAECost(p, ...
+    inputSize, hiddenSizeL3, outputSize, netconfig, lambda, train_images, yi), ...
+    stackedAETheta, DeepOptions);
+save stackedAEOptTheta;
+pause(5);
 toc(t4);
+disp('Ready to test');
 %% STEP 6: Test 
-%  Instructions: You will need to complete the code in stackedAEPredict.m
-%                before running this part of the code
-%
 
 % Get labelled test images
 % Note that we apply the same kind of preprocessing as the training set

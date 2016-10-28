@@ -1,6 +1,6 @@
 function [ cost, grad ] = stackedAECost(theta, inputSize, hiddenSize, ...
                                               numClasses, netconfig, ...
-                                              lambda, data, groundTruth,perceptronSize)
+                                              lambda, data, groundTruth)
                                          
 % stackedAECost: Takes a trained multilayer neural network and a training data set with groundTruths,
 % and returns cost and gradient using a stacked autoencoder model. Used for
@@ -19,13 +19,19 @@ function [ cost, grad ] = stackedAECost(theta, inputSize, hiddenSize, ...
 
 %% Unroll Classifier Parameters : Perceptron 
 % We first extract the part which compute the multi layer network gradient
-perTheta{1,1} = reshape(theta(1:perceptronSize*hiddenSize), perceptronSize, hiddenSize);
-perTheta{1,2} = reshape(theta(perceptronSize*hiddenSize+1:perceptronSize*hiddenSize+1+perceptronSize*numClasses-1), numClasses, perceptronSize);
-perb{1,1} = theta(perceptronSize*hiddenSize+1+perceptronSize*numClasses:perceptronSize*hiddenSize+1+perceptronSize*numClasses+perceptronSize-1);
-perb{1,2} = theta(perceptronSize*hiddenSize+1+perceptronSize*numClasses+perceptronSize:perceptronSize*hiddenSize+perceptronSize*numClasses+perceptronSize+numClasses);
+% perTheta{1,1} = reshape(theta(1:perceptronSize*hiddenSize), perceptronSize, hiddenSize);
+% perTheta{1,2} = reshape(theta(perceptronSize*hiddenSize+1:perceptronSize*hiddenSize+1+perceptronSize*numClasses-1), numClasses, perceptronSize);
+% perb{1,1} = theta(perceptronSize*hiddenSize+1+perceptronSize*numClasses:perceptronSize*hiddenSize+1+perceptronSize*numClasses+perceptronSize-1);
+% perb{1,2} = theta(perceptronSize*hiddenSize+1+perceptronSize*numClasses+perceptronSize:perceptronSize*hiddenSize+perceptronSize*numClasses+perceptronSize+numClasses);
+
+perTheta{1,1} = reshape(theta(1:numClasses*hiddenSize), numClasses, hiddenSize);
+perb{1,1} = theta(numClasses*hiddenSize+1:numClasses*hiddenSize+1+numClasses-1);
+
 
 % Extract out the "stack"  parameters
-stack = params2stack(theta(perceptronSize*hiddenSize+perceptronSize*numClasses+perceptronSize+numClasses+1:end), netconfig);
+% stack = params2stack(theta(perceptronSize*hiddenSize+perceptronSize*numClasses+perceptronSize+numClasses+1:end), netconfig);
+stack = params2stack(theta(numClasses*hiddenSize+numClasses+1:end), netconfig);
+
 %% buraya kadar okey
 % You will need to compute the following gradients
 % perceptronThetaGrad1 = cell(size(perTheta{1,2}));
@@ -75,7 +81,7 @@ for l=1:depth,
 end
 
 %% Feedforward over multi layer neural network
-nl = 3;
+nl = 4;
 ap(1) = {a{depth+1}}; % auto encoderdan çýkan featurelar
 for i = 2: nl % loop through hidden layers
      l= i; % next layer
