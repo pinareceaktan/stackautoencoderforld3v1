@@ -1,31 +1,26 @@
-function [pred] = stackedAEPredict(theta, inputSize, hiddenSize, numClasses,perceptronSize, netconfig, data)
+function [landmark_predictions,pose_predictions] = stackedAEPredict(theta, inputSize, hiddenSize, numClasses, netconfig, data)
                                          
 % stackedAEPredict: Takes a trained theta and a test data set,
 % and returns the predicted labels for each example.
                                          
 % theta: trained weights from the autoencoder
 % outputSize : visibleSize: the number of input units
-% hiddenSize:  the number of hidden units *at the 2nd layer* 7 or your last
-% year of the autoencoder
-% numClasses:  the number of categories : 136 coordinates
+% hiddenSize:  the number of hidden units *at the 3rd layer* Your
+% autoencoder's last layer
+% numClasses:  the number of categories : 136 coordinates + 2 pose classes
 % data: Our matrix containing the training data as columns.  So, data(:,i) is the i-th training example. 
 
-% Your code should produce the prediction matrix 
  
 %% Unroll theta parameter
 
-% We first extract the part which compute the softmax gradient
-perTheta{1,1} = reshape(theta(1:perceptronSize*hiddenSize), perceptronSize, hiddenSize);
-perTheta{1,2} = reshape(theta(perceptronSize*hiddenSize+1:perceptronSize*hiddenSize+1+perceptronSize*numClasses-1), numClasses, perceptronSize);
-perb{1,1} = theta(perceptronSize*hiddenSize+1+perceptronSize*numClasses:perceptronSize*hiddenSize+1+perceptronSize*numClasses+perceptronSize-1);
-perb{1,2} = theta(perceptronSize*hiddenSize+1+perceptronSize*numClasses+perceptronSize:perceptronSize*hiddenSize+perceptronSize*numClasses+perceptronSize+numClasses);
+% We first extract the part which compute perceptron gradient
+perTheta{1,1} = reshape(theta(1:numClasses*hiddenSize), numClasses, hiddenSize); % 138x400
+perb{1,1} = theta(numClasses*hiddenSize+1:numClasses*hiddenSize+numClasses);   % 138x1
+
 
 % Extract out the "stack"
-stack = params2stack(theta(perceptronSize*hiddenSize+perceptronSize*numClasses+perceptronSize+numClasses+1:end), netconfig);
+stack = params2stack(theta(numClasses*hiddenSize+numClasses+1:end), netconfig);
 
-%% ---------- YOUR CODE HERE --------------------------------------
-%  Instructions: Compute pred using theta assuming that the labels start 
-%                from 1.
 
 % feedforward pass over autoencoders
 depth = numel(stack);
@@ -39,7 +34,7 @@ for l=1:depth,
 end
 
 %% Feedforward over multi layer neural network
-nl = 3;
+nl = 2;
 ap(1) = {double(a{depth+1})}; % auto encoderdan çýkan featurelar
 for i = 2: nl % loop through hidden layers
      l= i; % next layer
@@ -47,8 +42,11 @@ for i = 2: nl % loop through hidden layers
      zp(l) =  {perTheta{1,lpre}*ap{1,lpre}+repmat(perb{1,lpre},1,size(data,2))};
      ap(l)=    {sigmoid(zp{1,l})};
 end
- pred = ap{1,nl}*100; % denormalization
-
+% Renormalize ap
+normalized_predictions = reshape(im2double(ap{1,nl}(:)),size(ap{1,2},1),size(ap{1,2},2));
+% Denormalize ap
+landmark_predictions = ap{1,nl}(1:136,:)*50; % denormalization
+pose_predictions     =   ap{1,nl}(137:end,:);
 
 % -----------------------------------------------------------
 

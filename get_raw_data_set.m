@@ -1220,13 +1220,14 @@ load('datadenormalized.mat')
 
 augmented_data_denormalized = datadenormalized;
 
+
 disp('Augmentation is done!')
 
 switch how
-%     case 'mean0std1Normalized' 
-%         %% mean 0 std 1 normalization
-%         pose_part = pose_partition;
-%         [images,landmark_labels,pose_labels]=get_data_set_prepared(augmented_data,pose_part);
+    case 'NotNormalized' 
+        %% mean 0 std 1 normalization
+        pose_part = pose_partition;
+        [images,landmark_labels,pose_labels]=get_data_set_prepared(augmented_data_denormalized,pose_part);
     case 'GCNNormalized'
         pose_part = pose_partition;
         [images,landmark_labels,pose_labels]=get_data_set_prepared(augmented_data_denormalized,pose_part);
@@ -1248,14 +1249,22 @@ switch how
         [images,landmark_labels,pose_labels]=get_data_set_prepared(augmented_data_denormalized,pose_part);
         %% STP1: Global Contrast Normalization
         [gcnn_images,gcnnmean0std1_images] = gcn(images); 
+        for i = 1:size(gcnn_images,2)
+            gcnn_images(:,i) = mat2gray(gcnn_images(:,i));
+            landmark_labels(:,i) = mat2gray(landmark_labels(:,i));
+        end
         clear images
-        images = zero_one_normalization(gcnn_images);
-        landmark_labels = zero_one_normalization(landmark_labels);
+        images = gcnn_images;
+        
+        
     case 'classicalNormalization'
          pose_part = pose_partition;
         [images,landmark_labels,pose_labels]=get_data_set_prepared(augmented_data_denormalized,pose_part);
-        images = zero_one_normalization(images);
-        landmark_labels = zero_one_normalization(landmark_labels);
+        for i = 1:size(images,2)
+            images(:,i) = mat2gray(images(:,i));
+            landmark_labels(:,i) = mat2gray(landmark_labels(:,i));
+        end
+        
 end
 disp('Train set is READY !');
 cd(programRoot);

@@ -7,7 +7,7 @@ b{1,1} = theta(outputSize*inputSize+1:end);
 % b1 : 136*1
  
 m = size(data,2); % number of train sampes
-nl = 3; % number of layers 
+nl = 2; % number of layers 
 %% Forward Propagation
 a(1) = {data};
 for i = 2: nl % loop through hidden layers
@@ -32,14 +32,17 @@ for i = nl:-1:2
 
 W1grad = partialw{1,2}*1/m+lambda*Theta{1,1};
 b1grad =  1/m*partialb{1,1};
-W2grad = partialw{1,3}*1/m+lambda*Theta{1,2};
-b2grad = 1/m*partialb{1,2};
+% W2grad = partialw{1,3}*1/m+lambda*Theta{1,2};
+% b2grad = 1/m*partialb{1,2};
 
 cost_err = cost_err/m;
-cost_weights = lambda/2*(sum(Theta{1,1}(:).^2) + sum(Theta{1,2}(:).^2)); % w regularization weight decay parameter
+% cost_weights = lambda/2*(sum(Theta{1,1}(:).^2) + sum(Theta{1,2}(:).^2)); % w regularization weight decay parameter
+cost_weights = lambda/2*(sum(Theta{1,1}(:).^2)); % w regularization weight decay parameter
 cost = cost_err + cost_weights ;
 
-grad = [W1grad(:) ; W2grad(:) ; b1grad(:) ; b2grad(:)];
+% grad = [W1grad(:) ; W2grad(:) ; b1grad(:) ; b2grad(:)];
+grad = [W1grad(:) ; b1grad(:)];
+
 end
 function sigm = sigmoid(x)
   

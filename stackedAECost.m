@@ -80,8 +80,8 @@ for l=1:depth,
     a{l+1} = sigmoid(z{l+1});
 end
 
-%% Feedforward over multi layer neural network
-nl = 4;
+%% Feedforward over perceptron
+nl = 2;
 ap(1) = {a{depth+1}}; % auto encoderdan çýkan featurelar
 for i = 2: nl % loop through hidden layers
      l= i; % next layer
@@ -106,16 +106,17 @@ for i = nl:-1:2
 % Gradients 
 W1grad = perpartialw{1,2}*1/m+lambda*perTheta{1,1};
 b1grad =  1/m*perpartialb{1,1};
-W2grad = perpartialw{1,3}*1/m+lambda*perTheta{1,2};
-b2grad = 1/m*perpartialb{1,2};
+% W2grad = perpartialw{1,3}*1/m+lambda*perTheta{1,2};
+% b2grad = 1/m*perpartialb{1,2};
 % Cost
 cost_err = cost_err/m;
-cost_weights = lambda/2*(sum(perTheta{1,1}(:).^2) + sum(perTheta{1,2}(:).^2)); % w regularization weight decay parameter
+% cost_weights = lambda/2*(sum(perTheta{1,1}(:).^2) + sum(perTheta{1,2}(:).^2)); % w regularization weight decay parameter
+cost_weights = lambda/2*(sum(perTheta{1,1}(:).^2)); % w regularization weight decay parameter
 cost = cost_err + cost_weights ;
 %% FINE TUNE!    
 % deltas. Note that sparsityParam is not used for fine tuning
 delta = cell(depth+1);
-delta{depth+1} = -(W1grad'*W2grad'*(groundTruth-h)) .* a{depth+1};
+delta{depth+1} = -(W1grad'*(groundTruth-h)) .* a{depth+1};
 
 for l=depth:-1:2,
     delta{l} = (stack{l}.w'*delta{l+1}) .* a{l};
@@ -132,7 +133,8 @@ end
 
 
 %% Roll gradient vector
-perceptronThetaGrad = [W1grad(:) ; W2grad(:) ; b1grad(:) ; b2grad(:)];
+% perceptronThetaGrad = [W1grad(:) ; W2grad(:) ; b1grad(:) ; b2grad(:)];
+perceptronThetaGrad = [W1grad(:) ; b1grad(:) ];
 
 grad = [perceptronThetaGrad(:) ; stack2params(stackgrad)];
 
