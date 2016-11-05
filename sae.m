@@ -1,15 +1,20 @@
 %%  Stacked Autoencoder implementation based on the courses of NG in CS294A/CS294W
-%% STEP 0: Parameter initialization
-inputSize       = 50 * 50;% image size
-outputSize      = 68*2+2;     % 136 coordinates will be extracted
-hiddenSizeL1    = 1600;     % first layer auto encoder extracts 1600 features 
-hiddenSizeL2    = 900;      % second layer auto encoder extracts 900 features
-hiddenSizeL3    = 400;      % third layer auto encoder extracts 400 features
- 
+% STEP 0: Parameter initialization
+
+% About train data 
+inputSize       = 50 * 50; % image size
+outputSize      = 68*2+2;  % 136 coordinates + 2 pose classes 
+
+% About network architecture
+hiddenSizeL1    = 1600;    % first layer auto encoder extracts 1600 features 
+hiddenSizeL2    = 900;     % second layer auto encoder extracts 900 features
+hiddenSizeL3    = 400;     % third layer auto encoder extracts 400 features
+
+% About network parameters 
 sparsityParam   = 0.1;      % desired average activation of the hidden units.
                             % (This was denoted by the Greek alphabet rho, which looks like a lower-case "p",
                             %  in the lecture notes). 
-lambda          = 3e-3;     % weight decay parameter       
+lambda          = 1e-2;     % weight decay parameter       
 beta            = 3;        % weight of sparsity penalty term       
 
 
@@ -168,30 +173,17 @@ disp('Ready to test');
 % save test_pose_labels.mat
 load('testImages.mat');
 %% STEP 6: Test : Run Netwotk on Test Images
-[landmark_prd,pose_prd] = stackedAEPredict(stackedAEOptTheta, inputSize, hiddenSizeL3, ...
-                          outputSize, netconfig, testImages);
-                      train_images
-save landmark_prd ;
-save pose_prd;
+% [landmark_prd,pose_prd] = stackedAEPredict(stackedAEOptTheta, inputSize, hiddenSizeL3, ...
+%                           outputSize, netconfig, testImages);
+                      
+                      [landmark_prd_on_train,pose_prd_on_train] = stackedAEPredict(stackedAEOptTheta, inputSize, hiddenSizeL3, ...
+                          outputSize, netconfig, train_images);
+                      
+save landmark_prd_on_train ;
+save pose_prd_on_train;
 pause(5);
 
-% for i = 1: size(testImages,2)
-%     fig = figure;
-%     subplot(1,2,1);
-%     imshow(reshape(denormalizedTestData(i).face,100,100));
-%     hold on;
-%     plot(pred2(1:68,i),pred2(69:136,i),'r.','MarkerSize',20);
-%     title('My Predictions')
-%     subplot(1,2,2);
-%     imshow(reshape(denormalizedTestData(i).face,100,100));
-%     hold on;
-%     plot(validation(1:68,i),validation(69:136,i),'r.','MarkerSize',20);
-%     title('Ground Truth')
-%     pause(5);
-%     close all;
-% end
-% cost_err= 0.5*sumsqr(pred2-validation);% J(w,b) cost
-% acc = mean(testLabels(:) == pred(:));
-fprintf('After Finetuning Test Accuracy: %0.3f%%\n', cost_err );
+what_is_error
+
 
 

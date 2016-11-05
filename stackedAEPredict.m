@@ -45,8 +45,8 @@ end
 % Renormalize ap
 normalized_predictions = reshape(im2double(ap{1,nl}(:)),size(ap{1,2},1),size(ap{1,2},2));
 % Denormalize ap
-landmark_predictions = normalized_predictions{1,nl}(1:136,:)*50; % denormalization
-pose_predictions     =   normalized_predictions{1,nl}(137:end,:);
+landmark_predictions = normalized_predictions(1:136,:)*50; % denormalization
+pose_predictions     =   normalized_predictions(137:end,:);
 
 % -----------------------------------------------------------
 
