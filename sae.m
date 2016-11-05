@@ -161,11 +161,16 @@ disp('Ready to test');
 
 % Get labelled test images
 % Note that we apply the same kind of preprocessing as the training set
-[testImages,validation,test_pose_labels] = get_raw_test_set('normalized',0);
 
+% [testImages,validation,test_pose_labels] = get_raw_test_set('normalized',0);
+% save testImages.mat
+% save validation.mat
+% save test_pose_labels.mat
+load('testImages.mat');
 %% STEP 6: Test : Run Netwotk on Test Images
 [landmark_prd,pose_prd] = stackedAEPredict(stackedAEOptTheta, inputSize, hiddenSizeL3, ...
                           outputSize, netconfig, testImages);
+                      train_images
 save landmark_prd ;
 save pose_prd;
 pause(5);
