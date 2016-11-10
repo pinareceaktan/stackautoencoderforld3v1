@@ -42,45 +42,70 @@ end
 
 % Cost Function
 cost_err= 1/m*0.5*sumsqr(a{1,3}-a{1,1});% J(w,b) cost
-% Calculating regularization term : dummy but accurate
-for j = 1:nl-1 % networkde kaç layer varsa
-    number_of_units = numel(Theta{1,j});
-    sumup{1,j} = 0;
-    for i = 1: number_of_units
-        sumup{1,j} = sumup{1,j} + Theta{1,j}(i)^2;
-    end
-end
+% Calculating regularization term : dummy but accurate in e-11 order
+        % for j = 1:nl-1 % networkde kaç layer varsa
+        %     number_of_units = numel(Theta{1,j});
+        %     sumup{1,j} = 0;
+        %     for i = 1: number_of_units
+        %         sumup{1,j} = sumup{1,j} + Theta{1,j}(i)^2;
+        %     end
+        % end
 % Calculating regularization term : smart but not accurate
-% for j = 1: nl-1 % networkde kaç tane layer varsa 
-%     sum{1,j} = sum(Theta{1,j}(:).^2);
-% end
-disp('dssad');
+for j = 1: nl-1 % networkde kaç tane layer varsa 
+    sumup{1,j} = sum(Theta{1,j}(:).^2);
+end
+
 regularization_term = lambda/2*sum(cell2mat(sumup));
 cost_err = cost_err + regularization_term;
 
 %  Back Propagation step 2 : Error of node j in layer l
+% Dummy way to compute gradients
+    % for i = nl:-1:2 % for each layer back to the front
+    %     disp(['layer: ' num2str(i)])
+    %     lb = i;
+    %     if lb == nl % is it the output layer 
+    %         % output layer
+    %         for j = 1: numel(a{1,nl}) % output layerdaki her nöron için
+    %           disp(['in output layer, node: ' num2str(j)]);
+    %           errors_per_unit(lb,j) = (-1*(a{1,1}(j)-a{1,3}(j)))*sigmoidinv(a{1,lb}(j));
+    %         end
+    %     else
+    %         % hidden layer
+    %         for k = 1: numel(a{1,i}) % mevcut hidden layerdaki her nöron için
+    %             disp(['in layer ' num2str(i) ' , node: ' num2str(k)]);
+    %             for j = 1: numel(a{1,i+1}) % bir sonraki layerdaki nöron sayýsý kadar dön
+    %             disp(['in layer ' num2str(i+1) ' , node: ' num2str(j)]);    
+    %             errors_per_unit(i,k) = (Theta{1,i}(j,k)*errors_per_unit(i+1,j))* sigmoidinv(a{1,i}(k));
+    %             end
+    %         end
+    % %         delta(1,lb) = {(Theta{1,lb}'*delta{1,lb+1}+repmat(beta*(-(sc./rho)+(1-sc)./(1-rho)),1,m)).*sigmoidinv(a{1,lb})};
+    %     end
+    % end
+% Smart vectorized version
 for i = nl:-1:2 % for each layer back to the front
-    lb = i;
-    if lb == nl % is it the output layer 
+    disp(['layer: ' num2str(i)])
+    
+    if i == nl % is it the output layer 
         % output layer
-        for j = 1: numel(a{1,nl}) % output layerdaki her nöron için
-          errors_per_unit(lb,j) = (-1*(a{1,1}(j)-a{1,3}(j)))*sigmoidinv(z{1,lb}(j));
-        end
+        error_per_units{i} = (-1*(a{1,1}-a{1,3})).*sigmoidinv(a{1,i}); % hadamard product between sigmoid inv and error
     else
         % hidden layer
-        for k = 1: numel(a{1,i}) % mevcut hidden layerdaki her nöron için
-            for j = 1: numel(a{1,i+1}) % bir sonraki layerdaki nöron sayýsý kadar dön
-            errors_per_unit(i,k) = (Theta{1,i}(i,k)*errors_per_unit(i+1,j))* sigmoidinv(z{1,i}(k));
-            end
-        end
-%         delta(1,lb) = {(Theta{1,lb}'*delta{1,lb+1}+repmat(beta*(-(sc./rho)+(1-sc)./(1-rho)),1,m)).*sigmoidinv(a{1,lb})};
+        errors_per_unit{i} = (Theta{1,i}'*error_per_units{1,i+1}).* sigmoidinv(a{1,i});
+        clear delta
+        %     delta(1,lb) = {(Theta{1,lb}'*delta{1,lb+1}+repmat(beta*(-(sc./rho)+(1-sc)./(1-rho)),1,m)).*sigmoidinv(a{1,lb})};
     end
-    
-    % Compute the derivatives
-    partialw(lb) = {delta{1,lb}*a{lb-1}'};
-    partialb(lb-1) = {sumup(delta{1,lb},2)};
-
 end
+
+% Computing partial derivatives
+
+for l = 1:nl-1
+    partial_weights(l) = {(errors_per_unit{l+1}*a{1,l}')'};
+    partial_biases(l)  = {delta};
+end
+disp('there');
+    partialw(ll) = {delta{1,ll}*a{ll-1}'};
+    partialb(ll-1) = {sumup(delta{1,ll},2)};
+
 % Gradient descent to decrease the cost function
 
 W1grad = partialw{1,2}*1/m+lambda*Theta{1,1};
