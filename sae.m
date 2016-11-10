@@ -20,13 +20,12 @@ beta            = 3;        % weight of sparsity penalty term
 
 %% STEP 1: Load train data from three datasets: LFPW,AFW and HELEN
 % Uncomment if you fetch data set in meanwhile 
-[train_images,yi,pose_labels] = get_raw_data_set('GCNZeroOneNormalization',0);
-normalized_pose =reshape(mat2gray(pose_labels(:)),size(pose_labels,1),size(pose_labels,2));
-
-smap = vertcat(yi,normalized_pose');
-
-% load('train_images.mat'); % 2500*37766
-% load('yi.mat');           % 138*37766     
+% [train_images,yi,pose_labels] = get_raw_data_set('GCNZeroOneNormalization',0);
+% normalized_pose =reshape(mat2gray(pose_labels(:)),size(pose_labels,1),size(pose_labels,2));
+% 
+% smap = vertcat(yi,normalized_pose');
+ load('train_images.mat');
+ load('smap.mat');
 
 %% STEP 2.a: Layer 1 : Train the first sparse autoencoder 2500 * 1600
 
@@ -35,11 +34,12 @@ options.Method = 'lbfgs'; % optimization algorithm
 options.maxIter = 500;    % Maximum number of iterations of L-BFGS to run aslýnda 400
 options.display = 'on';
 
-% sae1Theta = initializeParameters(hiddenSizeL1, inputSize);
+sae1Theta = initializeParameters(hiddenSizeL1, inputSize);
 t1 = tic;
-% [sae1OptTheta, cost] = minFunc(@(p) sparseAutoencoderCost(...
-%     p, inputSize, hiddenSizeL1, lambda, sparsityParam, beta, train_images), ...
-%     sae1Theta, options);
+[sae1OptTheta, cost] = minFunc(@(p) sparseAutoencoderCost(...
+    p, inputSize, hiddenSizeL1, lambda, sparsityParam, beta, train_images), ...
+    sae1Theta, options);
+disp('auto encoder cost');
 % save 'sae1OrptTheta.mat' sae1OptTheta;
 load('sae1OptTheta.mat');
 toc(t1);
