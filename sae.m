@@ -31,7 +31,7 @@ beta            = 3;        % weight of sparsity penalty term
 
 addpath minFunc/
 options.Method = 'lbfgs'; % optimization algorithm
-options.maxIter = 500;    % Maximum number of iterations of L-BFGS to run aslýnda 400
+options.maxIter = 400;    % Maximum number of iterations of L-BFGS to run aslýnda 400
 options.display = 'on';
 
 sae1Theta = initializeParameters(hiddenSizeL1, inputSize);
