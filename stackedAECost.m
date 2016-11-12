@@ -19,11 +19,6 @@ function [ cost, grad ] = stackedAECost(theta, inputSize, hiddenSize, ...
 
 %% Unroll Classifier Parameters : Perceptron 
 % We first extract the part which compute the multi layer network gradient
-% perTheta{1,1} = reshape(theta(1:perceptronSize*hiddenSize), perceptronSize, hiddenSize);
-% perTheta{1,2} = reshape(theta(perceptronSize*hiddenSize+1:perceptronSize*hiddenSize+1+perceptronSize*numClasses-1), numClasses, perceptronSize);
-% perb{1,1} = theta(perceptronSize*hiddenSize+1+perceptronSize*numClasses:perceptronSize*hiddenSize+1+perceptronSize*numClasses+perceptronSize-1);
-% perb{1,2} = theta(perceptronSize*hiddenSize+1+perceptronSize*numClasses+perceptronSize:perceptronSize*hiddenSize+perceptronSize*numClasses+perceptronSize+numClasses);
-
 perTheta{1,1} = reshape(theta(1:numClasses*hiddenSize), numClasses, hiddenSize);
 perb{1,1} = theta(numClasses*hiddenSize+1:numClasses*hiddenSize+1+numClasses-1);
 
@@ -45,29 +40,7 @@ end
 
 cost = 0; % You need to compute this
 
-% You might find these variables useful
 m = size(data, 2);
-
-%% --------------------------- YOUR CODE HERE -----------------------------
-%  Instructions: Compute the cost function and gradient vector for 
-%                the stacked autoencoder.
-%
-%                You are given a stack variable which is a cell-array of
-%                the weights and biases for every layer. In particular, you
-%                can refer to the weights of Layer d, using stack{d}.w and
-%                the biases using stack{d}.b . To get the total number of
-%                layers, you can use numel(stack).
-%
-%                The last layer of the network is connected to the softmax
-%                classification layer, softmaxTheta.
-%
-%                You should compute the gradients for the softmaxTheta,
-%                storing that in softmaxThetaGrad. Similarly, you should
-%                compute the gradients for each layer in the stack, storing
-%                the gradients in stackgrad{d}.w and stackgrad{d}.b
-%                Note that the size of the matrices in stackgrad should
-%                match exactly that of the size of the matrices in stack.
-%
 
 % feedforward pass over autoencoders
 depth = numel(stack); % depth of stack
@@ -80,39 +53,54 @@ for l=1:depth,
     a{l+1} = sigmoid(z{l+1});
 end
 
-%% Feedforward over perceptron
-nl = 2;
-ap(1) = {a{depth+1}}; % auto encoderdan çýkan featurelar
+% feedforward over perceptron
+nl = 2; % number of layers 
+ap(1) = {a{depth+1}};
 for i = 2: nl % loop through hidden layers
-     l= i; % next layer
-     lpre = i-1; % previous layer
-     zp(l) =  {perTheta{1,lpre}*ap{1,lpre}+repmat(perb{1,lpre},1,size(data,2))};
-     ap(l)=    {sigmoid(zp{1,l})};
- end
-h = ap{1,nl};
-%% cost err of perceptron 
-cost_err = 0.5 * sumsqr(h-groundTruth);
+    l= i; % next layer
+    lpre = i-1; % previous layer
+    zp(l) =  {perTheta{1,lpre}*ap{1,lpre}+repmat(perb{1,lpre},1,m)};
+    ap(l)=    {sigmoid(zp{1,l})};
+end
+
+% Cost Function : Perceptron
+cost_err= 1/m*0.5*sumsqr(ap{1,nl}-groundTruth);% J(w,b) cost
+
+% Calculating regularization term 
+for j = 1: nl-1 % networkde kaç tane layer varsa 
+    sumup{1,j} = sum(perTheta{1,j}(:).^2);
+end
+
+regularization_term = lambda/2*sum(cell2mat(sumup));
+cost_err = cost_err + regularization_term;
+
 %% Back Prop.
-for i = nl:-1:2
-    lb = i;
-     if lb == nl % is it the output layer 3.layer
-        perdelta(1,lb)= {(ap{1,lb}-groundTruth).*sigmoidinv(ap{1,lb})} ;
-    else  % hidden layer  
-        perdelta(1,lb) = {(perTheta{1,lb}'*perdelta{1,lb+1}).*sigmoidinv(ap{1,lb})};
-     end
-    perpartialw(lb) = {perdelta{1,lb}*ap{lb-1}'};
-    perpartialb(lb-1) = {sum(perdelta{1,lb},2)};
- end
-% Gradients 
-W1grad = perpartialw{1,2}*1/m+lambda*perTheta{1,1};
-b1grad =  1/m*perpartialb{1,1};
-% W2grad = perpartialw{1,3}*1/m+lambda*perTheta{1,2};
-% b2grad = 1/m*perpartialb{1,2};
-% Cost
-cost_err = cost_err/m;
-% cost_weights = lambda/2*(sum(perTheta{1,1}(:).^2) + sum(perTheta{1,2}(:).^2)); % w regularization weight decay parameter
-cost_weights = lambda/2*(sum(perTheta{1,1}(:).^2)); % w regularization weight decay parameter
-cost = cost_err + cost_weights ;
+ 
+for i = nl:-1:2 % for each layer back to the front
+    
+    if i == nl % is it the output layer 
+        % output layer
+        perdelta{i} = (-1*(groundTruth-ap{1,3})).*sigmoidinv(ap{1,i}); % hadamard product between sigmoid inv and error
+    else
+        % hidden layer
+        perdelta{i} = (perTheta{1,i}'*perdelta{1,i+1}).* sigmoidinv(ap{1,i});
+    end
+end
+
+% Computing partial derivatives
+
+for l = 1:nl-1
+    perpartialw(l) = {perdelta{l+1}*ap{1,l}'};
+    perpartialb(l)  = {perdelta{l+1}};
+end
+
+% Computing gradients 
+
+W1grad = perpartialw{1,1}*1/m+lambda*perTheta{1,1};
+b1grad =  mean(perpartialb{1,1},2);
+
+
+
 %% FINE TUNE!    
 % deltas. Note that sparsityParam is not used for fine tuning
 delta = cell(depth+1);
@@ -126,10 +114,6 @@ for l=depth:-1:1,
     stackgrad{l}.w = delta{l+1}*a{l}'/m;
     stackgrad{l}.b = sum(delta{l+1},2)/m;
 end
-
-
-
-
 
 
 %% Roll gradient vector
