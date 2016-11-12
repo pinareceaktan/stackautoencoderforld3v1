@@ -72,7 +72,7 @@ for j = 1: nl-1 % networkde kaç tane layer varsa
 end
 
 regularization_term = lambda/2*sum(cell2mat(sumup));
-cost_err = cost_err + regularization_term;
+cost = cost_err + regularization_term;
 
 %% Back Prop.
  
