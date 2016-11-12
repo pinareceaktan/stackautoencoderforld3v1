@@ -80,7 +80,7 @@ for i = nl:-1:2 % for each layer back to the front
     
     if i == nl % is it the output layer 
         % output layer
-        perdelta{i} = (-1*(groundTruth-ap{1,3})).*sigmoidinv(ap{1,i}); % hadamard product between sigmoid inv and error
+        perdelta{i} = (-1*(groundTruth-ap{1,nl})).*sigmoidinv(ap{1,i}); % hadamard product between sigmoid inv and error
     else
         % hidden layer
         perdelta{i} = (perTheta{1,i}'*perdelta{1,i+1}).* sigmoidinv(ap{1,i});
