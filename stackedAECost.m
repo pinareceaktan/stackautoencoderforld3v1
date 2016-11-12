@@ -104,7 +104,7 @@ b1grad =  mean(perpartialb{1,1},2);
 %% FINE TUNE!    
 % deltas. Note that sparsityParam is not used for fine tuning
 delta = cell(depth+1);
-delta{depth+1} = -(W1grad'*(groundTruth-h)) .* a{depth+1};
+delta{depth+1} = -(W1grad'*(groundTruth-ap{1,nl})) .* a{depth+1};
 
 for l=depth:-1:2,
     delta{l} = (stack{l}.w'*delta{l+1}) .* a{l};
