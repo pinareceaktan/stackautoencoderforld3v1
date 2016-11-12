@@ -19,7 +19,7 @@ for i = 2: nl % loop through hidden layers
 end
 
 %% Cost Function
-cost_err= 1/m*0.5*sumsqr(a{1,3}-a{1,1});% J(w,b) cost
+cost_err= 1/m*0.5*sumsqr(a{1,3}-groundTruth);% J(w,b) cost
 
 % Calculating regularization term 
 for j = 1: nl-1 % networkde kaç tane layer varsa 
