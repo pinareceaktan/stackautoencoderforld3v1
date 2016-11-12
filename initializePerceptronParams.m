@@ -10,7 +10,7 @@ function theta = initializePerceptronParams(outputSize,inputSize)
 % theta = [W1(:) ; W2(:) ; b1(:) ; b2(:)];
 
 % normal distribution on weights
-W1 = normrand(0,0.003,[outputSize, inputSize]); % hidden layer * input layer sized
+W1 = normrnd(0,0.003,[outputSize, inputSize]); % hidden layer * input layer sized
 b1 = zeros(outputSize, 1); % hidden layer *1 sized
 
 theta = [W1(:) ; b1(:) ];
