@@ -37,7 +37,7 @@ for i = nl:-1:2 % for each layer back to the front
     
     if i == nl % is it the output layer 
         % output layer
-        delta{i} = (-1*(groundTruth-a{1,3})).*sigmoidinv(a{1,i}); % hadamard product between sigmoid inv and error
+        delta{i} = (-1*(groundTruth-a{1,nl})).*sigmoidinv(a{1,i}); % hadamard product between sigmoid inv and error
     else
         % hidden layer
         delta{i} = (Theta{1,i}'*delta{1,i+1}).* sigmoidinv(a{1,i});
