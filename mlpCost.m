@@ -8,39 +8,54 @@ b{1,1} = theta(outputSize*inputSize+1:end);
  
 m = size(data,2); % number of train sampes
 nl = 2; % number of layers 
+
 %% Forward Propagation
 a(1) = {data};
 for i = 2: nl % loop through hidden layers
-     l= i; % next layer
-     lpre = i-1; % previous layer
-     z(l) =  {Theta{1,lpre}*a{1,lpre}+repmat(b{1,lpre},1,m)};
-     a(l)=    {sigmoid(z{1,l})};
- end
-%% Cost Err
-cost_err = 0.5 * sumsqr((a{1,nl}-groundTruth));
+    l= i; % next layer
+    lpre = i-1; % previous layer
+    z(l) =  {Theta{1,lpre}*a{1,lpre}+repmat(b{1,lpre},1,m)};
+    a(l)=    {sigmoid(z{1,l})};
+end
+
+%% Cost Function
+cost_err= 1/m*0.5*sumsqr(a{1,3}-a{1,1});% J(w,b) cost
+
+% Calculating regularization term 
+for j = 1: nl-1 % networkde kaç tane layer varsa 
+    sumup{1,j} = sum(Theta{1,j}(:).^2);
+end
+
+regularization_term = lambda/2*sum(cell2mat(sumup));
+cost = cost_err + regularization_term;
+
+
 %% Back Prop.
-for i = nl:-1:2
-    lb = i;
-     if lb == nl % is it the output layer 3.layer
-        delta(1,lb)= {(a{1,lb}-groundTruth).*sigmoidinv(a{1,lb})} ;
-    else  % hidden layer  
-        delta(1,lb) = {(Theta{1,lb}'*delta{1,lb+1}).*sigmoidinv(a{1,lb})};
-     end
-    partialw(lb) = {delta{1,lb}*a{lb-1}'};
-    partialb(lb-1) = {sum(delta{1,lb},2)};
- end
+ 
+for i = nl:-1:2 % for each layer back to the front
+%     disp(['layer: ' num2str(i)])
+    
+    if i == nl % is it the output layer 
+        % output layer
+        delta{i} = (-1*(groundTruth-a{1,3})).*sigmoidinv(a{1,i}); % hadamard product between sigmoid inv and error
+    else
+        % hidden layer
+        delta{i} = (Theta{1,i}'*delta{1,i+1}).* sigmoidinv(a{1,i});
+    end
+end
 
-W1grad = partialw{1,2}*1/m+lambda*Theta{1,1};
-b1grad =  1/m*partialb{1,1};
-% W2grad = partialw{1,3}*1/m+lambda*Theta{1,2};
-% b2grad = 1/m*partialb{1,2};
+% Computing partial derivatives
 
-cost_err = cost_err/m;
-% cost_weights = lambda/2*(sum(Theta{1,1}(:).^2) + sum(Theta{1,2}(:).^2)); % w regularization weight decay parameter
-cost_weights = lambda/2*(sum(Theta{1,1}(:).^2)); % w regularization weight decay parameter
-cost = cost_err + cost_weights ;
+for l = 1:nl-1
+    partial_weights(l) = {delta{l+1}*a{1,l}'};
+    partial_biases(l)  = {delta{l+1}};
+end
 
-% grad = [W1grad(:) ; W2grad(:) ; b1grad(:) ; b2grad(:)];
+% Computing gradients 
+
+W1grad = partial_weights{1,1}*1/m+lambda*Theta{1,1};
+b1grad =  mean(partial_biases{1,1},2);
+
 grad = [W1grad(:) ; b1grad(:)];
 
 end
