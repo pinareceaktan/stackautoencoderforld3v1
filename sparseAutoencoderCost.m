@@ -29,7 +29,6 @@ b{1,2} = theta(2*hiddenSize*inputSize+hiddenSize+1:end);
 
 m = size(data,2); % number of train samples
 nl = 3 ;          % number of layers
-sc =  sparsityParam; 
 
 % Back Propagation step 1: Forward Pass
 a(1) = {data}; % input
@@ -42,6 +41,7 @@ end
 
 % Cost Function
 cost_err= 1/m*0.5*sumsqr(a{1,3}-a{1,1});% J(w,b) cost
+
 % Calculating regularization term : dummy but accurate in e-11 order
         % for j = 1:nl-1 % networkde kaç layer varsa
         %     number_of_units = numel(Theta{1,j});
@@ -50,13 +50,18 @@ cost_err= 1/m*0.5*sumsqr(a{1,3}-a{1,1});% J(w,b) cost
         %         sumup{1,j} = sumup{1,j} + Theta{1,j}(i)^2;
         %     end
         % end
-% Calculating regularization term : smart but not accurate
+% Calculating regularization term 
 for j = 1: nl-1 % networkde kaç tane layer varsa 
     sumup{1,j} = sum(Theta{1,j}(:).^2);
 end
 
 regularization_term = lambda/2*sum(cell2mat(sumup));
 cost_err = cost_err + regularization_term;
+
+% Calculating sparsity parameter
+rho_hat = sum(a{1,2},2)/m;
+sparsity_deriv = beta*...
+    (-sparsityParam./rho_hat + (1-sparsityParam)./(1-rho_hat));
 
 %  Back Propagation step 2 : Error of node j in layer l
 % Dummy way to compute gradients
@@ -83,38 +88,38 @@ cost_err = cost_err + regularization_term;
     % end
 % Smart vectorized version
 for i = nl:-1:2 % for each layer back to the front
-    disp(['layer: ' num2str(i)])
+%     disp(['layer: ' num2str(i)])
     
     if i == nl % is it the output layer 
         % output layer
-        error_per_units{i} = (-1*(a{1,1}-a{1,3})).*sigmoidinv(a{1,i}); % hadamard product between sigmoid inv and error
+        delta{i} = (-1*(a{1,1}-a{1,3})).*sigmoidinv(a{1,i}); % hadamard product between sigmoid inv and error
     else
         % hidden layer
-        errors_per_unit{i} = (Theta{1,i}'*error_per_units{1,i+1}).* sigmoidinv(a{1,i});
-        clear delta
-        %     delta(1,lb) = {(Theta{1,lb}'*delta{1,lb+1}+repmat(beta*(-(sc./rho)+(1-sc)./(1-rho)),1,m)).*sigmoidinv(a{1,lb})};
+        delta{i} = (Theta{1,i}'*delta{1,i+1}+ repmat(sparsity_deriv,1,m)).* sigmoidinv(a{1,i});
     end
 end
 
 % Computing partial derivatives
 
 for l = 1:nl-1
-    partial_weights(l) = {(errors_per_unit{l+1}*a{1,l}')'};
-    partial_biases(l)  = {delta};
+    partial_weights(l) = {delta{l+1}*a{1,l}'};
+    partial_biases(l)  = {delta{l+1}};
 end
-disp('there');
-    partialw(ll) = {delta{1,ll}*a{ll-1}'};
-    partialb(ll-1) = {sumup(delta{1,ll},2)};
-
-% Gradient descent to decrease the cost function
-
-W1grad = partialw{1,2}*1/m+lambda*Theta{1,1};
-b1grad =  1/m*partialb{1,1};
-W2grad = partialw{1,3}*1/m+lambda*Theta{1,2};
-b2grad = 1/m*partialb{1,2};
 
 
+% Computing gradients 
 
+W1grad = partial_weights{1,1}*1/m+lambda*Theta{1,1};
+b1grad =  mean(partial_biases{1,1},2);
+W2grad = partial_weights{1,2}*1/m+lambda*Theta{1,2};
+b2grad = mean(partial_biases{1,2},2);
+
+% KL divergence
+KLdiv = sparsityParam*log(sparsityParam./rho_hat) + ...
+    (1 - sparsityParam)*log((1 - sparsityParam)./(1 - rho_hat));
+
+cost_sparse = beta*sum(KLdiv); % induce "sparsity"
+cost = cost_err  + cost_sparse;
 
 
 
@@ -122,14 +127,6 @@ grad = [W1grad(:) ; W2grad(:) ; b1grad(:) ; b2grad(:)];
 
 end
 
-
-% cost_sparse = beta*sum(KLdiv); % induce "sparsity"
-% 
-% cost = cost_err + cost_weights + cost_sparse;
-% 
-% % Regularization
-% rho = sum(a{1,2},2)/m; % mean of the activations in hidden layer, sum over all train samples
-% KLdiv = sc*log(sc./rho) + (1 - sc)*log((1 - sc)./(1 - rho));
 function sigm = sigmoid(x)
   
     sigm = 1 ./ (1 + exp(-x));
