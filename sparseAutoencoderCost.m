@@ -88,7 +88,7 @@ sparsity_deriv = beta*...
     % end
 % Smart vectorized version
 for i = nl:-1:2 % for each layer back to the front
-    disp(['layer: ' num2str(i)])
+%     disp(['layer: ' num2str(i)])
     
     if i == nl % is it the output layer 
         % output layer
