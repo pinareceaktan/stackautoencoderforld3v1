@@ -124,6 +124,22 @@ cost = cost_err  + cost_sparse;
 
 
 grad = [W1grad(:) ; W2grad(:) ; b1grad(:) ; b2grad(:)];
+      h = figure ;
+      subplot(2,3,1);
+      imagesc(data(:));
+      subplot(2,3,4);
+      imagesc(mean(data,2));
+      subplot(2,3,2)
+      imagesc(W1grad(:));
+      subplot(2,3,5)
+      imagesc(mean(W1grad,1));
+      subplot(2,3,3)
+      imagesc(z{1,nl}(:));
+      subplot(2,3,6)
+      imagesc(a{1,nl}(:));
+      colorbar
+      saveas(h,char(strcat('weights/',num2str(W1grad(1,1)),'.png')))
+      close
 
 end
 
