@@ -11,10 +11,10 @@ hiddenSizeL2    = 900;     % second layer auto encoder extracts 900 features
 hiddenSizeL3    = 400;     % third layer auto encoder extracts 400 features
 
 % About network parameters 
-sparsityParam   = 0.1;      % desired average activation of the hidden units.
+sparsityParam   = 1e-2;      % desired average activation of the hidden units.
                             % (This was denoted by the Greek alphabet rho, which looks like a lower-case "p",
                             %  in the lecture notes). 
-lambda          = 1e-2;     % weight decay parameter       
+lambda          = 1;     % weight decay parameter       
 beta            = 3;        % weight of sparsity penalty term       
 
 
@@ -31,19 +31,22 @@ beta            = 3;        % weight of sparsity penalty term
 
 addpath minFunc/
 options.Method = 'lbfgs'; % optimization algorithm
-options.maxIter = 400;    % Maximum number of iterations of L-BFGS to run aslýnda 400
+options.maxIter = 400;    % Maximum number of iterations of L-BFGS to run 
 options.display = 'on';
 
-% sae1Theta = initializeParameters(hiddenSizeL1, inputSize);
+sae1Theta = initializeParameters(hiddenSizeL1, inputSize);
 t1 = tic;
-% [sae1OptTheta, cost] = minFunc(@(p) sparseAutoencoderCost(...
-%     p, inputSize, hiddenSizeL1, lambda, sparsityParam, beta, train_images), ...
-%     sae1Theta, options);
-% disp('auto encoder cost');
-% save 'sae1OrptTheta.mat' sae1OptTheta;
-load('sae1OptTheta.mat');
+[sae1OptTheta, cost] = minFunc(@(p) sparseAutoencoderCost(...
+    p, inputSize, hiddenSizeL1, lambda, sparsityParam, beta, train_images), ...
+    sae1Theta, options);
+
+save 'sae1OptThetav1.mat' sae1OptTheta
+
+sae1OptTheta=normalizePic(sae1OptTheta);
+
+save 'sae1OrptTheta.mat' sae1OptTheta;
+% load('sae1OptTheta.mat');
 toc(t1);
-% pause(4);
 disp('Layer 1 : Theta calculated');
 
 
@@ -51,38 +54,37 @@ disp('Layer 1 : Theta calculated');
 % Uncomment if you are extracting sea1features in meanwhile
 [sae1Features] = feedForwardAutoencoder(sae1OptTheta, hiddenSizeL1, ...
                                         inputSize, train_images);
-% pause(4);
+
 save 'sae1Features.mat' sae1Features;
 disp('Layer 1 : Features calculated');
 % load('sae1Features.mat');
-% Normalize Features
-sae1Features = reshape(mat2gray(sae1Features(:)),size(sae1Features,1),size(sae1Features,2));
+
 
 %% STEP 3.a :  Layer 2 : Train the second sparse autoencoder : 1600*900
 
-% sae2Theta = initializeParameters(hiddenSizeL2, hiddenSizeL1);
+sae2Theta = initializeParameters(hiddenSizeL2, hiddenSizeL1);
 
 t2 = tic;
-
-% [sae2OptTheta, cost] = minFunc(@(p) sparseAutoencoderCost(...
-%     p, hiddenSizeL1, hiddenSizeL2, lambda, sparsityParam, beta, sae1Features), ...
-%     sae2Theta, options);
+[sae2OptTheta, cost] = minFunc(@(p) sparseAutoencoderCost(...
+    p, hiddenSizeL1, hiddenSizeL2, lambda, sparsityParam, beta, sae1Features), ...
+    sae2Theta, options);
 toc(t2);
 
-% pause(4);
-% save 'sae2OptTheta.mat' sae2OptTheta;
-load('sae2OptTheta.mat');
+save 'sae2OptThetav1.mat' sae2OptTheta;
+
+sae2OptTheta=normalizePic(sae2OptTheta);
+
+save 'sae2OptTheta.mat' sae2OptTheta;
+
+% load('sae2OptTheta.mat');
 disp('Layer 2 : Thetas calculated');
 
 %% STEP 3.b: Feed Forward Second Layer
 
 [sae2Features] = feedForwardAutoencoder(sae2OptTheta, hiddenSizeL2, ...
                                         hiddenSizeL1, sae1Features);
-pause(4);
-save sae2Features;
-% load('sae2Features.mat');
-% Normalize Features
-sae2Features = reshape(mat2gray(sae2Features(:)),size(sae2Features,1),size(sae2Features,2));
+
+save 'sae2Features.mat' sae2Features;
 disp('Layer 2 : Features calculated');
 
 %% STEP 4.a :  Layer 3 : Train the third sparse autoencoder : 900*400
@@ -93,41 +95,42 @@ t3 = tic;
     sae3Theta, options);
 toc(t3);
 
-pause(4);
-save 'sae3OptTheta.mat' sae3OptTheta;
+save 'sae3OptThetav1.mat' sae3OptTheta;
+
+sae3OptTheta = normalizePic(sae3OptTheta);
+
 % load('sae3OptTheta.mat');
 disp('Layer 3 : Thetas calculated');
 
-% load('sae3OptTheta.mat');
 %% STEP 4.b: Feed Forward Third Layer
 
-% [sae3Features] = feedForwardAutoencoder(sae3OptTheta, hiddenSizeL3, ...
-%                                         hiddenSizeL2, sae2Features);
-% save sae3Features;
-load('sae3Features.mat');
-disp('Layer 3 : Features calculated');
-% pause(4);
-% Normalize Features
-sae3Features = reshape(mat2gray(sae3Features(:)),size(sae3Features,1),size(sae3Features,2));
+[sae3Features] = feedForwardAutoencoder(sae3OptTheta, hiddenSizeL3, ...
+                                        hiddenSizeL2, sae2Features);
+save 'sae3Features.mat' sae3Features;
+% load('sae3Features.mat');
 disp('Layer 3 : Features calculated');
 
 %% STEP 5 : Train a multilayer perceptron
 t4 = tic;
-% perceptronTheta = initializePerceptronParams(outputSize,hiddenSizeL3);
-% perceptronOptions.Method = 'lbfgs';
-% perceptronOptions.display = 'on';
-% perceptronOptions.maxIter = 400; 
-% [saeMlpOptTheta, cost] = minFunc(@(p) mlpCost(...
-%     p, hiddenSizeL3,outputSize,lambda,sae3Features,smap), ...
-%     perceptronTheta, perceptronOptions);
+perceptronTheta = initializePerceptronParams(outputSize,hiddenSizeL3);
+perceptronOptions.Method = 'lbfgs';
+perceptronOptions.display = 'on';
+perceptronOptions.maxIter = 400; 
+[saeMlpOptTheta, cost] = minFunc(@(p) mlpCost(...
+    p, hiddenSizeL3,outputSize,lambda,sae3Features,smap), ...
+    perceptronTheta, perceptronOptions);
 toc(t4);
-% 
-% save 'saeMlpOptTheta.mat' saeMlpOptTheta;
 
-load('saeMlpOptTheta.mat');
+save 'saeMlpOptThetav1.mat' saeMlpOptTheta;
+
+saeMlpOptTheta = normalizePic(saeMlpOptTheta);
+
+save 'saeMlpOptTheta.mat' saeMlpOptTheta;
+
+
+% load('saeMlpOptTheta.mat');
 disp('Perceptron has trained ');
 
-pause(5);
 %% STEP 5: Finetune 
 
 % Implement the stackedAECost to give the combined cost of the whole model
@@ -152,14 +155,19 @@ stackedAETheta = [ saeMlpOptTheta ; stackparams ];
 
 DeepOptions.Method = 'lbfgs';
 DeepOptions.display = 'on';
-DeepOptions.maxIter = 250; % aslýnda 100
+DeepOptions.maxIter = 250;
 t4 = tic;
-% [stackedAEOptTheta, cost] = minFunc( @(p) stackedAECost(p, ...
-%     inputSize, hiddenSizeL3, outputSize, netconfig, lambda, train_images, smap), ...
-%     stackedAETheta, DeepOptions);
-% save stackedAEOptTheta;
-% pause(5);
-load('stackedAEOptTheta.mat');
+[stackedAEOptTheta, cost] = minFunc( @(p) stackedAECost(p, ...
+    inputSize, hiddenSizeL3, outputSize, netconfig, lambda, train_images, smap), ...
+    stackedAETheta, DeepOptions);
+
+save 'stackedAEOptThetav1.mat' stackedAEOptTheta;
+
+stackedAEOptTheta = normalizePic(stackedAEOptTheta);
+
+save 'saeMlpOptTheta.mat' saeMlpOptTheta;
+
+% load('stackedAEOptTheta.mat');
 toc(t4);
 disp('Ready to test');
 %% STEP 6: Test : Load denormalized test images
@@ -171,19 +179,24 @@ disp('Ready to test');
 % save testImages.mat
 % save validation.mat
 % save test_pose_labels.mat
-load('testImages.mat');
+
+load testImages.mat
+load validation.mat
+load test_pose_labels.mat
+
+% load('testImages.mat');
 %% STEP 6: Test : Run Netwotk on Test Images
-% [landmark_prd,pose_prd] = stackedAEPredict(stackedAEOptTheta, inputSize, hiddenSizeL3, ...
-%                           outputSize, netconfig, testImages);
+[landmark_prd,pose_prd] = stackedAEPredict(stackedAEOptTheta, inputSize, hiddenSizeL3, ...
+                          outputSize, netconfig, testImages);
                       
-                      [landmark_prd_on_train,pose_prd_on_train] = stackedAEPredict(stackedAEOptTheta, inputSize, hiddenSizeL3, ...
-                          outputSize, netconfig, train_images);
+%                       [landmark_prd_on_train,pose_prd_on_train] = stackedAEPredict(stackedAEOptTheta, inputSize, hiddenSizeL3, ...
+%                           outputSize, netconfig, train_images);
                       
-save landmark_prd_on_train ;
-save pose_prd_on_train;
+save landmark_prd ;
+save pose_prd;
 pause(5);
 
-what_is_error
+what_is_error;
 
 
 
